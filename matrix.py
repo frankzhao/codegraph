@@ -54,8 +54,12 @@ def matrix(a,b):
                 out[arow][bcol] += a[arow][brow] * b[brow][bcol]
 
                 # Nodes for addition values
-                o = Node(out[arow][brow], "o"+str(arow)+str(bcol))
-                n4 = Node(b[brow][bcol], "x"+str(brow))
+                o = Node(out[arow][bcol], "x"+str(arow)+str(bcol))
+                e2 = Relation(int.__add__, [o,out_node],[o])
+
+                # Add addition nodes
+                graph.nodes.append(o)
+                graph.relations.append(e2)
 
     print("Resulting matrix:")
     for e in out:

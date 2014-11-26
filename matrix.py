@@ -5,6 +5,14 @@ b = [[2],[3]]
 
 out = [[0],[0]]
 
+# Graph classes
+class Node:
+    relations = []
+
+class Relation:
+    method = None
+    nodes = []
+
 def matrix(a,b):
     for arow in range(len(a)):
         for bcol in range(len(b[0])):

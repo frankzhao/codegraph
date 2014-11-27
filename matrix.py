@@ -1,3 +1,6 @@
+import networkx as nx
+import matplotlib.pyplot as plt
+
 a = [[1,2],
      [3,4]]
 
@@ -18,11 +21,11 @@ class Node:
 
     def __str__(self):
         if self.value is None:
-            return "Node " + str(self.name)
+            return str(self.name)
         elif self.name is None:
-            return "Node " + str(self.value)
+            return str(self.value)
         else:
-            return "Node " + str(self.name)
+            return str(self.name)
 
 class Relation:
     def __init__(self, method=None, in_nodes=[], out_nodes=[]):
@@ -75,3 +78,18 @@ def matrix(a,b):
         print("Relation from " + str(map(str, r.in_nodes))
               + " to " + str(map(str, r.out_nodes)) + " using " + str(r.method))
 
+    generate_graph(graph)
+
+def generate_graph(graph):
+    G = nx.DiGraph()
+    for node in graph.nodes:
+        G.add_node(node)
+
+    for relation in graph.relations:
+        for inNode in relation.in_nodes:
+            for outNode in relation.out_nodes:
+                G.add_edge(inNode, outNode)
+
+    pos = nx.graphviz_layout(G, prog = 'dot')
+    nx.draw(G, pos, with_labels=True, arrows=True)
+    plt.show()

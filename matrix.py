@@ -47,7 +47,7 @@ def matrix(a,b):
                 out_node = Node(a[arow][brow] * b[brow][bcol])
 
                 # Relation for multiplication
-                e1 = Relation(int.__mul__, [n1,n2],[out_node])
+                e1 = Relation('mul', [n1,n2],[out_node])
 
                 # Add to graph
                 graph.nodes.append(n1)
@@ -58,7 +58,7 @@ def matrix(a,b):
 
                 # Nodes for addition values
                 o = Node(out[arow][bcol], "x"+str(arow)+str(bcol))
-                e2 = Relation(int.__add__, [o,out_node],[o])
+                e2 = Relation('add', [o,out_node],[o])
 
                 # Add addition nodes
                 graph.nodes.append(o)
@@ -89,7 +89,10 @@ def generate_graph(graph):
         for inNode in relation.in_nodes:
             for outNode in relation.out_nodes:
                 G.add_edge(inNode, outNode)
+                G.edge[inNode][outNode]['f']=str(relation.method)
 
+    edge_labels = nx.get_edge_attributes(G, 'f')
     pos = nx.graphviz_layout(G, prog = 'dot')
-    nx.draw(G, pos, with_labels=True, arrows=True)
+    nx.draw(G, pos, node_size=1000)
+    nx.draw_networkx_edge_labels(G, pos, labels = edge_labels.values())
     plt.show()

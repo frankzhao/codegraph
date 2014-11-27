@@ -89,10 +89,12 @@ def generate_graph(graph):
         for inNode in relation.in_nodes:
             for outNode in relation.out_nodes:
                 G.add_edge(inNode, outNode)
-                G.edge[inNode][outNode]['f']=str(relation.method)
+                G.edge[inNode][outNode]['method']=str(relation.method)
 
-    edge_labels = nx.get_edge_attributes(G, 'f')
+    edgelabels = nx.get_edge_attributes(G, 'method')
+    # swap key values for rendering
+    dict (zip(edgelabels.values(),edgelabels.keys()))
     pos = nx.graphviz_layout(G, prog = 'dot')
     nx.draw(G, pos, node_size=1000)
-    nx.draw_networkx_edge_labels(G, pos, labels = edge_labels.values())
+    nx.draw_networkx_edge_labels(G, pos, edge_labels = edgelabels)
     plt.show()

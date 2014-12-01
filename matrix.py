@@ -58,7 +58,8 @@ def matrix(a,b):
 
                 # Nodes for addition values
                 o = Node(out[arow][bcol], "x"+str(arow)+str(bcol))
-                e2 = Relation('add', [o,out_node],[o])
+                o_new = Node(out[arow][bcol], "x."+str(arow)+str(bcol))
+                e2 = Relation('add', [o,out_node],[o_new])
 
                 # Add addition nodes
                 graph.nodes.append(o)
@@ -96,10 +97,9 @@ def generate_graph(graph):
     edgelabels = nx.get_edge_attributes(G, 'method')
     # swap key values for rendering
     dict( zip(edgelabels.values(),edgelabels.keys()) )
-    #pos = nx.graphviz_layout(G, prog = 'dot')
-    #nx.draw(G, pos, node_size=1000)
-    #nx.draw_networkx_edge_labels(G, pos, edge_labels = edgelabels)
-    nx.draw(G)
+    pos = nx.graphviz_layout(G, prog = 'dot')
+    nx.draw(G, pos, node_size=1000)
+    nx.draw_networkx_edge_labels(G, pos, edge_labels = edgelabels)
     plt.show()
     return G
 

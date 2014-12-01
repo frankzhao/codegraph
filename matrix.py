@@ -78,8 +78,10 @@ def matrix(a,b):
         print("Relation from " + str(map(str, r.in_nodes))
               + " to " + str(map(str, r.out_nodes)) + " using " + str(r.method))
 
-    generate_graph(graph)
+    G = generate_graph(graph)
+    reconstruct(G)
 
+# Conversion from my graph model to networkx
 def generate_graph(graph):
     G = nx.DiGraph()
     for node in graph.nodes:
@@ -93,8 +95,19 @@ def generate_graph(graph):
 
     edgelabels = nx.get_edge_attributes(G, 'method')
     # swap key values for rendering
-    dict (zip(edgelabels.values(),edgelabels.keys()))
-    pos = nx.graphviz_layout(G, prog = 'dot')
-    nx.draw(G, pos, node_size=1000)
-    nx.draw_networkx_edge_labels(G, pos, edge_labels = edgelabels)
+    dict( zip(edgelabels.values(),edgelabels.keys()) )
+    #pos = nx.graphviz_layout(G, prog = 'dot')
+    #nx.draw(G, pos, node_size=1000)
+    #nx.draw_networkx_edge_labels(G, pos, edge_labels = edgelabels)
+    nx.draw(G)
     plt.show()
+    return G
+
+# Reconstruct input parameters from networkx graph
+def reconstruct(graph):
+    final_nodes = [] # Nodes with no outedges
+    for node in graph.nodes_iter():
+        print(str(node) + " " + str(len(graph.out_edges(node))))
+        if len(graph.out_edges(node)) == 0:
+            final_nodes.append(node)
+    print(final_nodes)

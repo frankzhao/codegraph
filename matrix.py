@@ -69,15 +69,15 @@ def matrix(a,b):
     for e in out:
         print(e)
 
-    print("Graph:")
-    print("\nNodes:")
-    for node in range(len(graph.nodes)):
-        print("Node " + str(graph.nodes[node].value))
-    print("\nRelations:")
-    for relation in range(len(graph.relations)):
-        r = graph.relations[relation]
-        print("Relation from " + str(map(str, r.in_nodes))
-              + " to " + str(map(str, r.out_nodes)) + " using " + str(r.method))
+    #print("Graph:")
+    #print("\nNodes:")
+    #for node in range(len(graph.nodes)):
+    #    print("Node " + str(graph.nodes[node].value))
+    #print("\nRelations:")
+    #for relation in range(len(graph.relations)):
+    #    r = graph.relations[relation]
+    #    print("Relation from " + str(map(str, r.in_nodes))
+    #          + " to " + str(map(str, r.out_nodes)) + " using " + str(r.method))
 
     G = generate_graph(graph)
     reconstruct(G)
@@ -100,14 +100,35 @@ def generate_graph(graph):
     pos = nx.graphviz_layout(G, prog = 'dot')
     nx.draw(G, pos, node_size=1000)
     nx.draw_networkx_edge_labels(G, pos, edge_labels = edgelabels)
-    plt.show()
+    #plt.show() # Plot graph
     return G
 
 # Reconstruct input parameters from networkx graph
 def reconstruct(graph):
     final_nodes = [] # Nodes with no outedges
+    initial_nodes = []
     for node in graph.nodes_iter():
-        print(str(node) + " " + str(len(graph.out_edges(node))))
+        #print(str(node) + " " + str(len(graph.out_edges(node))))
         if len(graph.out_edges(node)) == 0:
             final_nodes.append(node)
-    print(final_nodes)
+
+    # Trace final nodes back to origin
+    initial_nodes = []
+    find_input_nodes(graph, final_nodes, initial_nodes)
+    initial_node_values = nodes_to_values(initial_nodes)
+    print(initial_node_values)
+
+# DFS
+def find_input_nodes(graph, startNodes, outarray = []):
+    for node in startNodes:
+        if len(graph.predecessors(node)) == 0:
+            print(str(node.value) + " is a final node")
+            outarray.append(node)
+        else:
+            find_input_nodes(graph, graph.predecessors(node), outarray)
+
+# Convert node array to their values
+def nodes_to_values(nodes):
+    for i in range(len(nodes)):
+        nodes[i] = nodes[i].value
+    return nodes

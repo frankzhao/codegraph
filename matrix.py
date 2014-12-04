@@ -110,7 +110,7 @@ def generate_graph(graph):
     pos = nx.graphviz_layout(G, prog = 'dot')
     nx.draw(G, pos, node_size=1000)
     nx.draw_networkx_edge_labels(G, pos, edge_labels = edgelabels)
-    #plt.show() # Plot graph
+    plt.show() # Plot graph
     global dxg
     dxg = G
     return G
@@ -126,19 +126,25 @@ def reconstruct(graph):
 
     # Trace final nodes back to origin
     initial_nodes = []
-    find_input_nodes(graph, final_nodes, initial_nodes)
-    initial_node_values = nodes_to_values(initial_nodes)
-    print(initial_node_values)
+    for node in final_nodes:
+        path = []
+        find_input_nodes(graph, [node], initial_nodes, path)
 
 # DFS
-def find_input_nodes(graph, startNodes, outarray = []):
+def find_input_nodes(graph, startNodes, outarray=[], path=[]):
     for node in startNodes:
+        path.append(node)
         if not graph.predecessors(node):
             if node not in outarray:
                 outarray.append(node)
+                print("Path from " + str(node) + " to " + str(path[0]) + " is " + str(map(str, path)[::-1]))
         else:
             # Get the operation for the edge to this node and store it
-            find_input_nodes(graph, graph.predecessors(node), outarray)
+            in_edges = graph.in_edges(node)
+            for edge in in_edges:
+                method = graph.edge[edge[0]][node]["method"]
+                path.append(method)
+            find_input_nodes(graph, graph.predecessors(node), outarray, path)
 
 # Convert node array to their values
 def nodes_to_values(nodes):

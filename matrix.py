@@ -29,6 +29,14 @@ class Node:
         else:
             return str(self.name)
 
+    def __eq__(self, other):
+        if not isinstance(other, Node):
+            return False
+        return self.name == other.name
+
+    def __hash__(self):
+        return hash(self.name)
+
 class Relation:
     def __init__(self, method=None, in_nodes=[], out_nodes=[]):
         self.method = method
@@ -126,10 +134,10 @@ def reconstruct(graph):
 def find_input_nodes(graph, startNodes, outarray = []):
     for node in startNodes:
         if not graph.predecessors(node):
-            print("Current: " + node.name + " Buffer: " + str(map(str, outarray)))
             if node not in outarray:
                 outarray.append(node)
         else:
+            # Get the operation for the edge to this node and store it
             find_input_nodes(graph, graph.predecessors(node), outarray)
 
 # Convert node array to their values

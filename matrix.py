@@ -29,14 +29,6 @@ class Node:
         else:
             return str(self.name)
 
-    def __eq__(self, other):
-        if not isinstance(other, Node):
-            return False
-        return self.name == other.name
-
-    def __hash__(self):
-        return hash(self.name)
-
 class Relation:
     def __init__(self, method=None, in_nodes=[], out_nodes=[]):
         self.method = method
@@ -79,16 +71,6 @@ def matrix(a,b):
     for e in out:
         print(e)
 
-    #print("Graph:")
-    #print("\nNodes:")
-    #for node in range(len(graph.nodes)):
-    #    print("Node " + str(graph.nodes[node].value))
-    #print("\nRelations:")
-    #for relation in range(len(graph.relations)):
-    #    r = graph.relations[relation]
-    #    print("Relation from " + str(map(str, r.in_nodes))
-    #          + " to " + str(map(str, r.out_nodes)) + " using " + str(r.method))
-
     G = generate_graph(graph)
     reconstruct(G)
 
@@ -110,7 +92,7 @@ def generate_graph(graph):
     pos = nx.graphviz_layout(G, prog = 'dot')
     nx.draw(G, pos, node_size=1000)
     nx.draw_networkx_edge_labels(G, pos, edge_labels = edgelabels)
-    plt.show() # Plot graph
+    #plt.show() # Plot graph
     global dxg
     dxg = G
     return G
@@ -120,7 +102,6 @@ def reconstruct(graph):
     final_nodes = [] # Nodes with no outedges
     initial_nodes = []
     for node in graph.nodes_iter():
-        #print(str(node) + " " + str(len(graph.out_edges(node))))
         if len(graph.out_edges(node)) == 0:
             final_nodes.append(node)
 
@@ -135,19 +116,19 @@ def find_input_nodes(graph, startNodes, outarray=[], path=[]):
     for node in startNodes:
         path.append(node)
         if not graph.predecessors(node):
-            if node not in outarray:
+            if node.name not in nodes_to_names(outarray):
                 outarray.append(node)
                 print("Path from " + str(node) + " to " + str(path[0]) + " is " + str(map(str, path)[::-1]))
         else:
             # Get the operation for the edge to this node and store it
-            in_edges = graph.in_edges(node)
-            for edge in in_edges:
-                method = graph.edge[edge[0]][node]["method"]
-                path.append(method)
+            edge = graph.in_edges(node)[0] # TODO generalise to all edges
+            method = graph.edge[edge[0]][node]["method"]
+            path.append(method)
             find_input_nodes(graph, graph.predecessors(node), outarray, path)
 
 # Convert node array to their values
-def nodes_to_values(nodes):
+def nodes_to_names(nodes):
+    outarray = []
     for i in range(len(nodes)):
-        nodes[i] = nodes[i].name
-    return nodes
+        outarray.append(nodes[i].name)
+    return outarray

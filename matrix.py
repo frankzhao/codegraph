@@ -8,6 +8,8 @@ b = [[2],[3]]
 
 out = [[0],[0]]
 
+dxg = None
+
 # Graph classes
 class Graph:
     def __init__(self, nodes=[], relations=[]):
@@ -101,6 +103,8 @@ def generate_graph(graph):
     nx.draw(G, pos, node_size=1000)
     nx.draw_networkx_edge_labels(G, pos, edge_labels = edgelabels)
     #plt.show() # Plot graph
+    global dxg
+    dxg = G
     return G
 
 # Reconstruct input parameters from networkx graph
@@ -121,14 +125,15 @@ def reconstruct(graph):
 # DFS
 def find_input_nodes(graph, startNodes, outarray = []):
     for node in startNodes:
-        if len(graph.predecessors(node)) == 0:
-            print(str(node.value) + " is a final node")
-            outarray.append(node)
+        if not graph.predecessors(node):
+            print("Current: " + node.name + " Buffer: " + str(map(str, outarray)))
+            if node not in outarray:
+                outarray.append(node)
         else:
             find_input_nodes(graph, graph.predecessors(node), outarray)
 
 # Convert node array to their values
 def nodes_to_values(nodes):
     for i in range(len(nodes)):
-        nodes[i] = nodes[i].value
+        nodes[i] = nodes[i].name
     return nodes

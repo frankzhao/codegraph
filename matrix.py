@@ -1,5 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
+import numpy as np
 
 a = [[1,2],
      [3,4]]
@@ -122,17 +123,17 @@ def find_input_nodes(graph, startNodes, outarray=[], path=[], all_paths=[]):
     for node in startNodes:
         if not graph.predecessors(node):
             if node.name not in nodes_to_names(outarray):
-                #print(node)
                 outarray += [node]
-                #path = path[::-1]  # reverse
                 all_paths += [[node, path]]
-               # print("Path from " + str(node) + " to " + str(path[0]) + " is " + str(map(str, path)[::-1]))
         else:
             path += graph.predecessors(node)
             # Get the operation for the edge to this node and store it
-            edge = graph.in_edges(node)[0] # TODO generalise to all edges
-            method = graph.edge[edge[0]][node]["method"]
-            path += [method]
+            edges = graph.in_edges(node)
+            methods = []
+            for edge in edges:
+                method = graph.edge[edge[0]][node]["method"]
+                methods += [method]
+            path += list(np.unique(methods))
             find_input_nodes(graph, graph.predecessors(node), outarray, path, all_paths)
 
 ### UTILITY ###
@@ -156,5 +157,5 @@ def nodes_to_names(nodes):
         outarray += [nodes[i].name]
     return outarray
 
-matrix(a,b)
+#matrix(a,b)
 

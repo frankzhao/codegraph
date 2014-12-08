@@ -113,20 +113,21 @@ def reconstruct(graph):
         find_input_nodes(graph, [node], initial_nodes, path, all_paths)
 
     # Sort by output node to try and align input memory
-    #all_paths.sort()
+    all_paths.sort()
     print("Paths found: " + str(len(all_paths)))
     parray(rmap(str, all_paths))
 
 # DFS
 def find_input_nodes(graph, startNodes, outarray=[], path=[], all_paths=[]):
     for node in startNodes:
-        path.append(node)
         if not graph.predecessors(node):
             if node.name not in nodes_to_names(outarray):
+                print(node)
                 outarray.append(node)
-                all_paths.append(path[::-1])
-                print("Path from " + str(node) + " to " + str(path[0]) + " is " + str(map(str, path)[::-1]))
+                all_paths.append([node] + path[::-1])
+               # print("Path from " + str(node) + " to " + str(path[0]) + " is " + str(map(str, path)[::-1]))
         else:
+            path.append(graph.predecessors(node))
             # Get the operation for the edge to this node and store it
             edge = graph.in_edges(node)[0] # TODO generalise to all edges
             method = graph.edge[edge[0]][node]["method"]
@@ -153,3 +154,5 @@ def nodes_to_names(nodes):
     for i in range(len(nodes)):
         outarray.append(nodes[i].name)
     return outarray
+
+matrix(a,b)

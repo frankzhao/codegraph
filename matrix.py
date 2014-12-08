@@ -52,9 +52,9 @@ def matrix(a,b):
                 e1 = Relation('mul', [n1,n2],[out_node])
 
                 # Add to graph
-                graph.nodes.append(n1)
-                graph.nodes.append(n2)
-                graph.relations.append(e1)
+                graph.nodes += [n1]
+                graph.nodes += [n2]
+                graph.relations += [e1]
 
                 out[arow][bcol] += a[arow][brow] * b[brow][bcol]
 
@@ -64,8 +64,8 @@ def matrix(a,b):
                 e2 = Relation('add', [o,out_node],[o_new])
 
                 # Add addition nodes
-                graph.nodes.append(o)
-                graph.relations.append(e2)
+                graph.nodes += [o]
+                graph.relations += [e2]
 
     print("Resulting matrix:")
     for e in out:
@@ -103,7 +103,7 @@ def reconstruct(graph):
     initial_nodes = []
     for node in graph.nodes_iter():
         if len(graph.out_edges(node)) == 0:
-            final_nodes.append(node)
+            final_nodes += [node]
 
     # Trace final nodes back to origin
     initial_nodes = []
@@ -113,7 +113,7 @@ def reconstruct(graph):
         find_input_nodes(graph, [node], initial_nodes, path, all_paths)
 
     # Sort by output node to try and align input memory
-    all_paths.sort()
+    #all_paths.sort()
     print("Paths found: " + str(len(all_paths)))
     parray(rmap(str, all_paths))
 
@@ -122,16 +122,17 @@ def find_input_nodes(graph, startNodes, outarray=[], path=[], all_paths=[]):
     for node in startNodes:
         if not graph.predecessors(node):
             if node.name not in nodes_to_names(outarray):
-                print(node)
-                outarray.append(node)
-                all_paths.append([node] + path[::-1])
+                #print(node)
+                outarray += [node]
+                #path = path[::-1]  # reverse
+                all_paths += [[node, path]]
                # print("Path from " + str(node) + " to " + str(path[0]) + " is " + str(map(str, path)[::-1]))
         else:
-            path.append(graph.predecessors(node))
+            path += graph.predecessors(node)
             # Get the operation for the edge to this node and store it
             edge = graph.in_edges(node)[0] # TODO generalise to all edges
             method = graph.edge[edge[0]][node]["method"]
-            path.append(method)
+            path += [method]
             find_input_nodes(graph, graph.predecessors(node), outarray, path, all_paths)
 
 ### UTILITY ###
@@ -152,7 +153,8 @@ def parray(array):
 def nodes_to_names(nodes):
     outarray = []
     for i in range(len(nodes)):
-        outarray.append(nodes[i].name)
+        outarray += [nodes[i].name]
     return outarray
 
 matrix(a,b)
+

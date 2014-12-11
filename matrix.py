@@ -127,9 +127,8 @@ def reconstruct(graph):
     print("Paths found: " + str(len(all_paths)))
     parray(rmap(str, all_paths))
     
-    # Initial memory chunk
-    initial_values = get_initial_values(all_paths, graph)
-    print(str(initial_values))
+    # CUDA Code
+    print(cudagen(all_paths, graph))
 
 # DFS
 def find_input_nodes(graph, startNodes, outarray=[], path=[], all_paths=[]):
@@ -150,17 +149,26 @@ def find_input_nodes(graph, startNodes, outarray=[], path=[], all_paths=[]):
             path += list(np.unique(methods))
             find_input_nodes(graph, graph.predecessors(node), outarray, path, all_paths)
             
-def cudagen(paths):
-    code = "/* CODEGRAPH GENERATED CODE BEGIN */\n"
+def cudagen(paths, graph):
+    code ="""
+/* CODEGRAPH GENERATED CODE BEGIN */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <cuda_runtime.h>
+
+"""
+
     # Magic happens here
-    code = "/* CODEGRAPH GENERATED CODE END */\n"
+    # Create initial values
+    code += "initmem = " + " " + str(get_initial_values(paths, graph)) + "\n"
+    code += "\n/* CODEGRAPH GENERATED CODE END */\n"
     return code
     
 def get_initial_values(paths, graph):
     values = []
     for path in paths:
         node = path[0]
-        print(node.name + " " + str(graph.predecessors(node)))
         if not graph.predecessors(node):
             values.append(node.value)
     return values

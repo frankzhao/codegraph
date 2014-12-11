@@ -109,22 +109,25 @@ def reconstruct(graph):
     # Trace final nodes back to origin
     initial_nodes = []
     all_paths = []
+    print("Final nodes: " + str(rmap(str, final_nodes)))
     for node in final_nodes:
         path = []
         find_input_nodes(graph, [node], initial_nodes, path, all_paths)
 
     # Sort by output node to try and align input memory
-    #all_paths.sort()
+    all_paths.sort()
     print("Paths found: " + str(len(all_paths)))
     parray(rmap(str, all_paths))
 
 # DFS
 def find_input_nodes(graph, startNodes, outarray=[], path=[], all_paths=[]):
+    print("Looking at nodes " + str(rmap(str, startNodes)))
     for node in startNodes:
         if not graph.predecessors(node):
             if node.name not in nodes_to_names(outarray):
+                print(node.name)
                 outarray += [node]
-                all_paths += [[node, path]]
+                all_paths += [[node, path[::-1]]]
         else:
             path += graph.predecessors(node)
             # Get the operation for the edge to this node and store it

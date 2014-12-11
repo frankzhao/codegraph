@@ -44,15 +44,15 @@ graph = Graph()
 def matrix(a,b):
     for arow in range(len(a)):
         for bcol in range(len(b[0])):
-            o = Node(0, str(rand.getrandbits(16))+"x_init")
+            o = Node(0, rand_str()+"x_init")
             for brow in range(len(b)):
 
                 # Nodes for initial values
-                n1 = Node(a[arow][brow], str(rand.getrandbits(16))+"a"+str(arow)+str(brow))
-                n2 = Node(b[brow][bcol], str(rand.getrandbits(16))+"b"+str(brow)+str(bcol))
+                n1 = Node(a[arow][brow], rand_str()+"a"+str(arow)+str(brow))
+                n2 = Node(b[brow][bcol], rand_str()+"b"+str(brow)+str(bcol))
 
                 out_node = Node(a[arow][brow] * b[brow][bcol],
-                    str(rand.getrandbits(16)) + "v" + str(a[arow][brow] * b[brow][bcol]))
+                    rand_str() + "v" + str(a[arow][brow] * b[brow][bcol]))
 
                 # Relation for multiplication
                 e1 = Relation('mul', [n1,n2],[out_node])
@@ -65,10 +65,7 @@ def matrix(a,b):
                 out[arow][bcol] += a[arow][brow] * b[brow][bcol]
 
                 # Nodes for addition values
-                if not o:
-                    o = Node(out[arow][bcol], str(rand.getrandbits(16))+"x"+str(arow)+str(bcol))
-
-                o_new = Node(out[arow][bcol], str(rand.getrandbits(16))+"x."+str(arow)+str(bcol))
+                o_new = Node(out[arow][bcol], rand_str()+"x."+str(arow)+str(bcol))
                 e2 = Relation('add', [o,out_node],[o_new])
                 o = o_new
 
@@ -123,7 +120,8 @@ def reconstruct(graph):
         find_input_nodes(graph, [node], initial_nodes, path, all_paths)
 
     # Sort by output node to try and align input memory
-    all_paths.sort()
+    #all_paths.sort()
+    all_paths.sort(key=lambda p: len(p[1])) # sort by path length
     print("Paths found: " + str(len(all_paths)))
     parray(rmap(str, all_paths))
     
@@ -193,6 +191,9 @@ def nodes_to_names(nodes):
     for i in range(len(nodes)):
         outarray += [nodes[i].name]
     return outarray
+
+def rand_str():
+    return str(rand.getrandbits(16))
 
 matrix(a,b)
 plt.show() # Plot graph

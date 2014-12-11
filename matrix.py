@@ -1,6 +1,9 @@
+# Frank Zhao 2014
+# Code generation from algorithmic graphs
 import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
+import random as rand
 
 a = [[1,2],
      [3,4]]
@@ -41,13 +44,15 @@ graph = Graph()
 def matrix(a,b):
     for arow in range(len(a)):
         for bcol in range(len(b[0])):
+            o = Node(0, str(rand.getrandbits(16))+"x_init")
             for brow in range(len(b)):
 
                 # Nodes for initial values
-                n1 = Node(a[arow][brow], "a"+str(arow)+str(brow))
-                n2 = Node(b[brow][bcol], "b"+str(brow)+str(bcol))
+                n1 = Node(a[arow][brow], str(rand.getrandbits(16))+"a"+str(arow)+str(brow))
+                n2 = Node(b[brow][bcol], str(rand.getrandbits(16))+"b"+str(brow)+str(bcol))
 
-                out_node = Node(a[arow][brow] * b[brow][bcol])
+                out_node = Node(a[arow][brow] * b[brow][bcol],
+                    str(rand.getrandbits(16)) + "v" + str(a[arow][brow] * b[brow][bcol]))
 
                 # Relation for multiplication
                 e1 = Relation('mul', [n1,n2],[out_node])
@@ -60,9 +65,12 @@ def matrix(a,b):
                 out[arow][bcol] += a[arow][brow] * b[brow][bcol]
 
                 # Nodes for addition values
-                o = Node(out[arow][bcol], "x"+str(arow)+str(bcol))
-                o_new = Node(out[arow][bcol], "x."+str(arow)+str(bcol))
+                if not o:
+                    o = Node(out[arow][bcol], str(rand.getrandbits(16))+"x"+str(arow)+str(bcol))
+
+                o_new = Node(out[arow][bcol], str(rand.getrandbits(16))+"x."+str(arow)+str(bcol))
                 e2 = Relation('add', [o,out_node],[o_new])
+                o = o_new
 
                 # Add addition nodes
                 graph.nodes += [o]
@@ -94,7 +102,6 @@ def generate_graph(graph):
     nx.draw(G, pos, node_size=1000)
     nx.draw_networkx_edge_labels(G, pos, edge_labels = edgelabels)
     nx.draw_networkx_labels(G, pos)
-    plt.show() # Plot graph
     global dxg
     dxg = G
     return G
@@ -104,13 +111,13 @@ def reconstruct(graph):
     final_nodes = [] # Nodes with no outedges
     initial_nodes = []
     for node in graph.nodes_iter():
-        if len(graph.out_edges(node)) == 0:
+        if (len(graph.out_edges(node)) == 0):
             final_nodes += [node]
 
     # Trace final nodes back to origin
     initial_nodes = []
     all_paths = []
-    print("Final nodes: " + str(rmap(str, final_nodes)))
+    #print("Final nodes: " + str(rmap(str, final_nodes)))
     for node in final_nodes:
         path = []
         find_input_nodes(graph, [node], initial_nodes, path, all_paths)
@@ -119,14 +126,17 @@ def reconstruct(graph):
     all_paths.sort()
     print("Paths found: " + str(len(all_paths)))
     parray(rmap(str, all_paths))
+    
+    # Initial memory chunk
+    initial_values = get_initial_values(all_paths, graph)
+    print(str(initial_values))
 
 # DFS
 def find_input_nodes(graph, startNodes, outarray=[], path=[], all_paths=[]):
-    print("Looking at nodes " + str(rmap(str, startNodes)))
+    #print("Looking at nodes " + str(rmap(str, startNodes)))
     for node in startNodes:
         if not graph.predecessors(node):
-            if node.name not in nodes_to_names(outarray):
-                print(node.name)
+            if node not in outarray:
                 outarray += [node]
                 all_paths += [[node, path[::-1]]]
         else:
@@ -139,6 +149,21 @@ def find_input_nodes(graph, startNodes, outarray=[], path=[], all_paths=[]):
                 methods += [method]
             path += list(np.unique(methods))
             find_input_nodes(graph, graph.predecessors(node), outarray, path, all_paths)
+            
+def cudagen(paths):
+    code = "/* CODEGRAPH GENERATED CODE BEGIN */\n"
+    # Magic happens here
+    code = "/* CODEGRAPH GENERATED CODE END */\n"
+    return code
+    
+def get_initial_values(paths, graph):
+    values = []
+    for path in paths:
+        node = path[0]
+        print(node.name + " " + str(graph.predecessors(node)))
+        if not graph.predecessors(node):
+            values.append(node.value)
+    return values
 
 ### UTILITY ###
 
@@ -161,5 +186,5 @@ def nodes_to_names(nodes):
         outarray += [nodes[i].name]
     return outarray
 
-#matrix(a,b)
-
+matrix(a,b)
+plt.show() # Plot graph

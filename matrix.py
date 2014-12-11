@@ -93,7 +93,8 @@ def generate_graph(graph):
     pos = nx.graphviz_layout(G, prog = 'dot')
     nx.draw(G, pos, node_size=1000)
     nx.draw_networkx_edge_labels(G, pos, edge_labels = edgelabels)
-    #plt.show() # Plot graph
+    nx.draw_networkx_labels(G, pos)
+    plt.show() # Plot graph
     global dxg
     dxg = G
     return G

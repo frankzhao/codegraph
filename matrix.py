@@ -146,7 +146,9 @@ def find_input_nodes(graph, startNodes, outarray=[], path=[], all_paths=[]):
                 methods += [method]
             path += list(np.unique(methods))
             find_input_nodes(graph, graph.predecessors(node), outarray, path, all_paths)
-            
+
+testedge = None
+testnode = None
 def cudagen(paths, graph):
     code ="""
 /* CODEGRAPH GENERATED CODE BEGIN */
@@ -159,7 +161,39 @@ def cudagen(paths, graph):
 
     # Magic happens here
     # Create initial values
-    code += "initmem = " + " " + str(get_initial_values(paths, graph)) + "\n"
+    code += "float *initmem = " + " " + str(get_initial_values(paths, graph)) + ";\n"
+    
+    finalnodes = []
+    for node in graph.nodes():
+        if not graph.out_edges(node):
+            finalnodes.append(node)
+
+    print("=====")
+    for node in finalnodes:
+        code += "float " + node.name + " = "
+        inedges = graph.in_edges(node)
+        for i in range(len(inedges)):
+            edge = inedges[i]
+            
+            global testnode, testedge
+            testnode = node
+            testedge = edge
+            
+            if i > 0:
+                # Don't add op sign for first
+                op = graph.edge[edge[0]][edge[1]]["method"]
+                if op == "mul":
+                    code += " * "
+                elif op == "add":
+                    code += " + "
+                else:
+                    print("Operation: " + op + " not found")
+            code += edge[0].name
+        code += ";\n"
+            
+    print("=== DEBUG ===")
+    print(str(rmap(str, finalnodes)))
+    
     code += "\n/* CODEGRAPH GENERATED CODE END */\n"
     return code
     

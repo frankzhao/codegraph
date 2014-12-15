@@ -4,6 +4,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
 import random as rand
+import string
 
 a = [[1,2],
      [3,4]]
@@ -44,15 +45,15 @@ graph = Graph()
 def matrix(a,b):
     for arow in range(len(a)):
         for bcol in range(len(b[0])):
-            o = Node(0, rand_str()+"x_init")
+            o = Node(0, rand_hash(5)+"x_init")
             for brow in range(len(b)):
 
                 # Nodes for initial values
-                n1 = Node(a[arow][brow], rand_str()+"a"+str(arow)+str(brow))
-                n2 = Node(b[brow][bcol], rand_str()+"b"+str(brow)+str(bcol))
+                n1 = Node(a[arow][brow], rand_hash(5)+"a"+str(arow)+str(brow))
+                n2 = Node(b[brow][bcol], rand_hash(5)+"b"+str(brow)+str(bcol))
 
                 out_node = Node(a[arow][brow] * b[brow][bcol],
-                    rand_str() + "v" + str(a[arow][brow] * b[brow][bcol]))
+                    rand_hash(5) + "v" + str(a[arow][brow] * b[brow][bcol]))
 
                 # Relation for multiplication
                 e1 = Relation('mul', [n1,n2],[out_node])
@@ -65,7 +66,7 @@ def matrix(a,b):
                 out[arow][bcol] += a[arow][brow] * b[brow][bcol]
 
                 # Nodes for addition values
-                o_new = Node(out[arow][bcol], rand_str()+"x."+str(arow)+str(bcol))
+                o_new = Node(out[arow][bcol], rand_hash(5)+"x."+str(arow)+str(bcol))
                 e2 = Relation('add', [o,out_node],[o_new])
                 o = o_new
 
@@ -228,6 +229,9 @@ def nodes_to_names(nodes):
 
 def rand_str():
     return str(rand.getrandbits(16))
+
+def rand_hash(n):
+    return ''.join(rand.choice(string.ascii_uppercase) for i in range(n))
 
 matrix(a,b)
 plt.show() # Plot graph

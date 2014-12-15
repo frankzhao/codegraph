@@ -118,7 +118,7 @@ def reconstruct(graph):
     #print("Final nodes: " + str(rmap(str, final_nodes)))
     for node in final_nodes:
         path = []
-        find_input_nodes(graph, [node], initial_nodes, path, all_paths)
+        find_paths(graph, [node], initial_nodes, path, all_paths)
 
     # Sort by output node to try and align input memory
     #all_paths.sort()
@@ -128,9 +128,13 @@ def reconstruct(graph):
     
     # CUDA Code
     print(cudagen(all_paths, graph))
+    
+    for node in final_nodes:
+        path = rmap_nodes_args(get_path_for_node(node, graph), get_path_for_node, graph)
+        print(str(rmap(str, path)))
 
 # DFS
-def find_input_nodes(graph, startNodes, outarray=[], path=[], all_paths=[]):
+def find_paths(graph, startNodes, outarray=[], path=[], all_paths=[]):
     #print("Looking at nodes " + str(rmap(str, startNodes)))
     for node in startNodes:
         if not graph.predecessors(node):
@@ -146,12 +150,13 @@ def find_input_nodes(graph, startNodes, outarray=[], path=[], all_paths=[]):
                 method = graph.edge[edge[0]][node]["method"]
                 methods += [method]
             path += list(np.unique(methods))
-            find_input_nodes(graph, graph.predecessors(node), outarray, path, all_paths)
+            find_paths(graph, graph.predecessors(node), outarray, path, all_paths)
 
 testedge = None
 testnode = None
+
 def cudagen(paths, graph):
-    code ="""
+    code = """
 /* CODEGRAPH GENERATED CODE BEGIN */
 
 #include <stdio.h>
@@ -205,6 +210,23 @@ def get_initial_values(paths, graph):
         if not graph.predecessors(node):
             values.append(node.value)
     return values
+    
+def get_path_for_node(node, graph):
+    if node in ["add", "mul"]:
+        return node
+    path = []
+    print("Finding path to generate node " + node.name)
+    if not graph.in_edges(node):
+        return node
+    for i in range(len(graph.in_edges(node))):
+        edge = graph.in_edges(node)[i]
+        if i == 0:
+            method = graph.edge[edge[0]][edge[1]]["method"]
+            path.append(method)
+        path.append(edge[0])
+    
+    #print(str(rmap(str,path)))
+    return path
 
 ### UTILITY ###
 
@@ -214,6 +236,28 @@ def rmap(f, array):
         return [rmap(f, elem) for elem in array]
     else:
         return f(array)
+        
+def rfmap(array, *f):
+    if hasattr(array, "__iter__"):
+        return [rmap(elem, f) for elem in array]
+    else:
+        for i in range(len(f)):
+            array[i] = f(array[i])
+        return array
+
+def rmap_args(array, f, *args):
+    if hasattr(array, "__iter__"):
+        return [rmap_args(elem, f, *args) for elem in array]
+    else:
+        return f(array, *args)
+        
+def rmap_nodes_args(array, f, graph):
+    if hasattr(array, "__iter__"):
+        return [rmap_nodes_args(elem, f, graph) for elem in array]
+    elif isinstance(array, Node) and graph.in_edges(array):
+        return rmap_nodes_args(get_path_for_node(array, graph), get_path_for_node, graph)
+    else:
+        return f(array, graph)
 
 # Print array with newlines
 def parray(array):
@@ -231,7 +275,16 @@ def rand_str():
     return str(rand.getrandbits(16))
 
 def rand_hash(n):
-    return ''.join(rand.choice(string.ascii_uppercase) for i in range(n))
+    return ''.join(rand.choice(string.ascii_lowercase) for i in range(n))
+    
+def method_to_op(s):
+    if s == "mul":
+        return " * "
+    elif s == "add":
+        return " + "
+    else:
+        print("Operation: " + op + " not found")
+        return " (!) "
 
 matrix(a,b)
 plt.show() # Plot graph

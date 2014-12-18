@@ -124,14 +124,10 @@ def reconstruct(graph):
     #all_paths.sort()
     all_paths.sort(key=lambda p: len(p[1])) # sort by path length
     print("Paths found: " + str(len(all_paths)))
-    parray(rmap(str, all_paths))
+    #parray(rmap(str, all_paths))
     
     # CUDA Code
     print(cudagen(all_paths, graph))
-    
-    for node in final_nodes:
-        path = rmap_nodes_args(get_path_for_node(node, graph), get_path_for_node, graph)
-        print(str(rmap(str, path)))
 
 # DFS
 def find_paths(graph, startNodes, outarray=[], path=[], all_paths=[]):
@@ -167,14 +163,31 @@ def cudagen(paths, graph):
 
     # Magic happens here
     # Create initial values
-    code += "float *initmem = " + " " + str(get_initial_values(paths, graph)) + ";\n"
+    initial_dict = get_initial_values(paths, graph)
     
+    # generate initial_node -> array_pos dict
+    init_values = []
+    init_array_dict = {}
+    counter = 0
+    for d in initial_dict.keys():
+        init_values.append(initial_dict[d])
+        init_array_dict[d] = counter
+        counter += 1
+    
+    code += "float *initmem = " + str(init_values) + ";\n"
+    
+    # Find out how to generate final nodes
     finalnodes = []
     for node in graph.nodes():
         if not graph.out_edges(node):
             finalnodes.append(node)
 
-    print("=====")
+    paths_from_final = []
+    for node in finalnodes:
+        path = rmap_nodes_args(get_path_for_node(node, graph), get_path_for_node, graph)
+        paths_from_final.append(path)
+        print(str(rmap(str, path)))
+
     for node in finalnodes:
         code += "float " + node.name + " = "
         inedges = graph.in_edges(node)
@@ -204,18 +217,18 @@ def cudagen(paths, graph):
     return code
     
 def get_initial_values(paths, graph):
-    values = []
+    values = {}
     for path in paths:
         node = path[0]
         if not graph.predecessors(node):
-            values.append(node.value)
+            values[node] = node.value
     return values
     
 def get_path_for_node(node, graph):
     if node in ["add", "mul"]:
         return node
     path = []
-    print("Finding path to generate node " + node.name)
+    #print("Finding path to generate node " + node.name)
     if not graph.in_edges(node):
         return node
     for i in range(len(graph.in_edges(node))):
@@ -285,6 +298,11 @@ def method_to_op(s):
     else:
         print("Operation: " + op + " not found")
         return " (!) "
+
+# def parse_rpn(rpn, out_string):
+#     for symbol in rpn:
+#         if symbol == "add"
+#             return parse_rpn(1::len(rpn))
 
 matrix(a,b)
 plt.show() # Plot graph

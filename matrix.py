@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random as rand
 import string
+#from collections import deque
 
 a = [[1,2],
      [3,4]]
@@ -150,7 +151,7 @@ def find_paths(graph, startNodes, outarray=[], path=[], all_paths=[]):
 
 testedge = None
 testnode = None
-
+testpath = None
 def cudagen(paths, graph):
     code = """
 /* CODEGRAPH GENERATED CODE BEGIN */
@@ -186,7 +187,17 @@ def cudagen(paths, graph):
     for node in finalnodes:
         path = rmap_nodes_args(get_path_for_node(node, graph), get_path_for_node, graph)
         paths_from_final.append(path)
-        print(str(rmap(str, path)))
+        print(str(rmap(str, path))) # This generates prefix notation
+
+    global testpath
+    testpath = paths_from_final
+    for p in paths_from_final:
+        out = []
+        flattened_path = flatten(p)
+
+        print("Flattened: " + str(rmap(str, flattened_path)))
+        rpn_to_path(flattened_path, out)
+        print("=== " + str(out))
 
     for node in finalnodes:
         code += "float " + node.name + " = "
@@ -299,10 +310,32 @@ def method_to_op(s):
         print("Operation: " + op + " not found")
         return " (!) "
 
-# def parse_rpn(rpn, out_string):
-#     for symbol in rpn:
-#         if symbol == "add"
-#             return parse_rpn(1::len(rpn))
+def rpn_to_path(rpn, out):
+    #print("! " + out_string)
+    #print(str(rpn) + " " + out_string)
+    token = rpn.pop(0)
+    if token == "add":
+        out += [str(rpn_to_path(rpn, out)), " + ", str(rpn_to_path(rpn, out))]
+    elif token == "mul":
+        out += [str(rpn_to_path(rpn, out)), " * ", str(rpn_to_path(rpn, out))]
+    else:
+        return token.name
+
+def parse_rpn(rpn):
+    token = rpn.pop(0)
+    if token == "add":
+        return parse_rpn(rpn) + parse_rpn(rpn)
+    if token == "mul":
+        return parse_rpn(rpn) * parse_rpn(rpn)
+    else:
+        return int(token)
+
+def flatten(S):
+    if S == []:
+        return S
+    if isinstance(S[0], list):
+        return flatten(S[0]) + flatten(S[1:])
+    return S[:1] + flatten(S[1:])
 
 matrix(a,b)
 plt.show() # Plot graph

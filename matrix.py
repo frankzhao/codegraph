@@ -151,7 +151,6 @@ def find_paths(graph, startNodes, outarray=[], path=[], all_paths=[]):
 
 testedge = None
 testnode = None
-testpath = None
 def cudagen(paths, graph):
     code = """
 /* CODEGRAPH GENERATED CODE BEGIN */
@@ -189,37 +188,36 @@ def cudagen(paths, graph):
         paths_from_final.append(path)
         print(str(rmap(str, path))) # This generates prefix notation
 
-    global testpath
-    testpath = paths_from_final
-    for p in paths_from_final:
+    for i in range(len(paths_from_final)):
+        p = paths_from_final[i]
         out = []
         flattened_path = flatten(p)
 
         print("Flattened: " + str(rmap(str, flattened_path)))
-        rpn_to_path(flattened_path, out)
-        print("=== " + str(out))
+        print("!!!")
+        code += "\n float " + finalnodes[i].name + " = " + string.join(flatten(rpn_to_path(flattened_path))) + ";\n"
 
-    for node in finalnodes:
-        code += "float " + node.name + " = "
-        inedges = graph.in_edges(node)
-        for i in range(len(inedges)):
-            edge = inedges[i]
+    # for node in finalnodes:
+    #     code += "float " + node.name + " = "
+    #     inedges = graph.in_edges(node)
+    #     for i in range(len(inedges)):
+    #         edge = inedges[i]
             
-            global testnode, testedge
-            testnode = node
-            testedge = edge
+    #         global testnode, testedge
+    #         testnode = node
+    #         testedge = edge
             
-            if i > 0:
-                # Don't add op sign for first
-                op = graph.edge[edge[0]][edge[1]]["method"]
-                if op == "mul":
-                    code += " * "
-                elif op == "add":
-                    code += " + "
-                else:
-                    print("Operation: " + op + " not found")
-            code += edge[0].name
-        code += ";\n"
+    #         if i > 0:
+    #             # Don't add op sign for first
+    #             op = graph.edge[edge[0]][edge[1]]["method"]
+    #             if op == "mul":
+    #                 code += " * "
+    #             elif op == "add":
+    #                 code += " + "
+    #             else:
+    #                 print("Operation: " + op + " not found")
+    #         code += edge[0].name
+    #     code += ";\n"
             
     print("=== DEBUG ===")
     print(str(rmap(str, finalnodes)))
@@ -310,14 +308,14 @@ def method_to_op(s):
         print("Operation: " + op + " not found")
         return " (!) "
 
-def rpn_to_path(rpn, out):
+def rpn_to_path(rpn):
     #print("! " + out_string)
     #print(str(rpn) + " " + out_string)
     token = rpn.pop(0)
     if token == "add":
-        out += [str(rpn_to_path(rpn, out)), " + ", str(rpn_to_path(rpn, out))]
+        return [rpn_to_path(rpn), " + ", rpn_to_path(rpn)]
     elif token == "mul":
-        out += [str(rpn_to_path(rpn, out)), " * ", str(rpn_to_path(rpn, out))]
+        return [rpn_to_path(rpn), " * ", rpn_to_path(rpn)]
     else:
         return token.name
 

@@ -67,7 +67,7 @@ def matrix(a,b):
                 out[arow][bcol] += a[arow][brow] * b[brow][bcol]
 
                 # Nodes for addition values
-                o_new = Node(out[arow][bcol], rand_hash(5)+"x."+str(arow)+str(bcol))
+                o_new = Node(out[arow][bcol], rand_hash(5)+"x_"+str(arow)+str(bcol))
                 e2 = Relation('add', [o,out_node],[o_new])
                 o = o_new
 
@@ -173,8 +173,18 @@ def cudagen(paths, graph):
         init_values.append(initial_dict[d])
         init_array_dict[d] = counter
         counter += 1
+
+    for i in range(len(init_values)):
+        init_values[i] = "(float) " + str(init_values[i])
     
-    code += "float *initmem = " + str(init_values) + ";\n"
+    init_values_str = str(init_values).replace('[', "{\n    ").replace(']',"\n}").replace('\'', '')
+    code += "float initmem[" + str(len(init_values)) + "] = " + init_values_str + ";\n\n"
+
+    code += "int main() {\n"
+
+    for d in init_array_dict.keys():
+        code += "    float " + d.name + " = initmem[" + str(init_array_dict[d]) + "];\n"
+
     
     # Find out how to generate final nodes
     finalnodes = []
@@ -195,7 +205,7 @@ def cudagen(paths, graph):
 
         print("Flattened: " + str(rmap(str, flattened_path)))
         print("!!!")
-        code += "\n float " + finalnodes[i].name + " = " + string.join(flatten(rpn_to_path(flattened_path))) + ";\n"
+        code += "    float " + finalnodes[i].name + " = " + string.join(flatten(rpn_to_path(flattened_path))) + ";\n"
 
     # for node in finalnodes:
     #     code += "float " + node.name + " = "
@@ -222,6 +232,7 @@ def cudagen(paths, graph):
     print("=== DEBUG ===")
     print(str(rmap(str, finalnodes)))
     
+    code += "}" #end main
     code += "\n/* CODEGRAPH GENERATED CODE END */\n"
     return code
     
@@ -336,4 +347,4 @@ def flatten(S):
     return S[:1] + flatten(S[1:])
 
 matrix(a,b)
-plt.show() # Plot graph
+#plt.show() # Plot graph

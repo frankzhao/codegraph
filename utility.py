@@ -6,6 +6,31 @@ import string
 
 from graph import *
 
+def get_initial_values(paths, graph):
+    values = {}
+    for path in paths:
+        node = path[0]
+        if not graph.predecessors(node):
+            values[node] = node.value
+    return values
+    
+def get_path_for_node(node, graph):
+    if node in ["add", "mul"]:
+        return node
+    path = []
+    #print("Finding path to generate node " + node.name)
+    if not graph.in_edges(node):
+        return node
+    for i in range(len(graph.in_edges(node))):
+        edge = graph.in_edges(node)[i]
+        if i == 0:
+            method = graph.edge[edge[0]][edge[1]]["method"]
+            path.append(method)
+        path.append(edge[0])
+    
+    #print(str(rmap(str,path)))
+    return path
+
 ### UTILITY ###
 
 # Recursive map
@@ -64,32 +89,29 @@ def method_to_op(s):
         print("Operation: " + op + " not found")
         return " (!) "
 
-# def parse_rpn(rpn, out_string):
-#     for symbol in rpn:
-#         if symbol == "add"
-#             return parse_rpn(1::len(rpn))
+def rpn_to_path(rpn):
+    #print("! " + out_string)
+    #print(str(rpn) + " " + out_string)
+    token = rpn.pop(0)
+    if token == "add":
+        return [rpn_to_path(rpn), " + ", rpn_to_path(rpn)]
+    elif token == "mul":
+        return [rpn_to_path(rpn), " * ", rpn_to_path(rpn)]
+    else:
+        return token.name
 
-def get_initial_values(paths, graph):
-    values = {}
-    for path in paths:
-        node = path[0]
-        if not graph.predecessors(node):
-            values[node] = node.value
-    return values
-    
-def get_path_for_node(node, graph):
-    if node in ["add", "mul"]:
-        return node
-    path = []
-    #print("Finding path to generate node " + node.name)
-    if not graph.in_edges(node):
-        return node
-    for i in range(len(graph.in_edges(node))):
-        edge = graph.in_edges(node)[i]
-        if i == 0:
-            method = graph.edge[edge[0]][edge[1]]["method"]
-            path.append(method)
-        path.append(edge[0])
-    
-    #print(str(rmap(str,path)))
-    return path
+def parse_rpn(rpn):
+    token = rpn.pop(0)
+    if token == "add":
+        return parse_rpn(rpn) + parse_rpn(rpn)
+    if token == "mul":
+        return parse_rpn(rpn) * parse_rpn(rpn)
+    else:
+        return int(token)
+
+def flatten(S):
+    if S == []:
+        return S
+    if isinstance(S[0], list):
+        return flatten(S[0]) + flatten(S[1:])
+    return S[:1] + flatten(S[1:])

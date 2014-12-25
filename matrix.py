@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random as rand
 import string
+#from collections import deque
 
 from utility import *
 from graph import *
@@ -44,7 +45,7 @@ def matrix(a,b):
                 out[arow][bcol] += a[arow][brow] * b[brow][bcol]
 
                 # Nodes for addition values
-                o_new = Node(out[arow][bcol], rand_hash(5)+"x."+str(arow)+str(bcol))
+                o_new = Node(out[arow][bcol], rand_hash(5)+"x_"+str(arow)+str(bcol))
                 e2 = Relation('add', [o,out_node],[o_new])
                 o = o_new
 
@@ -128,7 +129,6 @@ def find_paths(graph, startNodes, outarray=[], path=[], all_paths=[]):
 
 testedge = None
 testnode = None
-
 def cudagen(paths, graph):
     code = """
 /* CODEGRAPH GENERATED CODE BEGIN */
@@ -151,8 +151,18 @@ def cudagen(paths, graph):
         init_values.append(initial_dict[d])
         init_array_dict[d] = counter
         counter += 1
+
+    for i in range(len(init_values)):
+        init_values[i] = "(float) " + str(init_values[i])
     
-    code += "float *initmem = " + str(init_values) + ";\n"
+    init_values_str = str(init_values).replace('[', "{\n    ").replace(']',"\n}").replace('\'', '')
+    code += "float initmem[" + str(len(init_values)) + "] = " + init_values_str + ";\n\n"
+
+    code += "int main() {\n"
+
+    for d in init_array_dict.keys():
+        code += "    float " + d.name + " = initmem[" + str(init_array_dict[d]) + "];\n"
+
     
     # Find out how to generate final nodes
     finalnodes = []
@@ -164,35 +174,45 @@ def cudagen(paths, graph):
     for node in finalnodes:
         path = rmap_nodes_args(get_path_for_node(node, graph), get_path_for_node, graph)
         paths_from_final.append(path)
-        print(str(rmap(str, path)))
+        print(str(rmap(str, path))) # This generates prefix notation
 
-    for node in finalnodes:
-        code += "float " + node.name + " = "
-        inedges = graph.in_edges(node)
-        for i in range(len(inedges)):
-            edge = inedges[i]
+    for i in range(len(paths_from_final)):
+        p = paths_from_final[i]
+        out = []
+        flattened_path = flatten(p)
+
+        print("Flattened: " + str(rmap(str, flattened_path)))
+        print("!!!")
+        code += "    float " + finalnodes[i].name + " = " + string.join(flatten(rpn_to_path(flattened_path))) + ";\n"
+
+    # for node in finalnodes:
+    #     code += "float " + node.name + " = "
+    #     inedges = graph.in_edges(node)
+    #     for i in range(len(inedges)):
+    #         edge = inedges[i]
             
-            global testnode, testedge
-            testnode = node
-            testedge = edge
+    #         global testnode, testedge
+    #         testnode = node
+    #         testedge = edge
             
-            if i > 0:
-                # Don't add op sign for first
-                op = graph.edge[edge[0]][edge[1]]["method"]
-                if op == "mul":
-                    code += " * "
-                elif op == "add":
-                    code += " + "
-                else:
-                    print("Operation: " + op + " not found")
-            code += edge[0].name
-        code += ";\n"
+    #         if i > 0:
+    #             # Don't add op sign for first
+    #             op = graph.edge[edge[0]][edge[1]]["method"]
+    #             if op == "mul":
+    #                 code += " * "
+    #             elif op == "add":
+    #                 code += " + "
+    #             else:
+    #                 print("Operation: " + op + " not found")
+    #         code += edge[0].name
+    #     code += ";\n"
             
     print("=== DEBUG ===")
     print(str(rmap(str, finalnodes)))
     
+    code += "}" #end main
     code += "\n/* CODEGRAPH GENERATED CODE END */\n"
     return code
 
 matrix(a,b)
-plt.show() # Plot graph
+#plt.show() # Plot graph

@@ -67,11 +67,18 @@ def parray(array):
     for e in array:
         print(e)
 
-# Convert node array to their values
+# Convert node array to their names
 def nodes_to_names(nodes):
     outarray = []
     for i in range(len(nodes)):
         outarray += [nodes[i].name]
+    return outarray
+    
+# Convert node array to their values
+def nodes_to_values(nodes):
+    outarray = []
+    for i in range(len(nodes)):
+        outarray += [nodes[i].value]
     return outarray
 
 def rand_str():
@@ -98,7 +105,7 @@ def rpn_to_path(rpn):
     elif token == "mul":
         return [rpn_to_path(rpn), " * ", rpn_to_path(rpn)]
     else:
-        return token.name
+        return token
 
 def parse_rpn(rpn):
     token = rpn.pop(0)

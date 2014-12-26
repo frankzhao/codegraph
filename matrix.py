@@ -180,32 +180,37 @@ def cudagen(paths, graph):
         p = paths_from_final[i]
         out = []
         flattened_path = flatten(p)
+        
+        # Generate initial array for this path
+        path_init = []
+        for e in flattened_path:
+            if e not in ["add", "mul"]:
+                path_init.append(e)
+
+        print("Initial values: " + str(map(str, path_init)))
+        
+        path_init_nodes = path_init[:]
+        for j in range(len(path_init)):
+            path_init[j] = "(float) " + str(path_init[j].value)
+        path_values_str = str(path_init).replace('[', "{\n    ").replace(']',"\n}").replace('\'', '')
+        code += "float initmem[" + str(len(path_init)) + "] = " + path_values_str + ";\n\n"
 
         print("Flattened: " + str(rmap(str, flattened_path)))
-        print("!!!")
-        code += "    float " + finalnodes[i].name + " = " + string.join(flatten(rpn_to_path(flattened_path))) + ";\n"
-
-    # for node in finalnodes:
-    #     code += "float " + node.name + " = "
-    #     inedges = graph.in_edges(node)
-    #     for i in range(len(inedges)):
-    #         edge = inedges[i]
-            
-    #         global testnode, testedge
-    #         testnode = node
-    #         testedge = edge
-            
-    #         if i > 0:
-    #             # Don't add op sign for first
-    #             op = graph.edge[edge[0]][edge[1]]["method"]
-    #             if op == "mul":
-    #                 code += " * "
-    #             elif op == "add":
-    #                 code += " + "
-    #             else:
-    #                 print("Operation: " + op + " not found")
-    #         code += edge[0].name
-    #     code += ";\n"
+        print("Path init: " + str(path_init_nodes))
+        
+        flattened_rpn = flatten(rpn_to_path(flattened_path))[:]
+        
+        # Convert RPN flattened path to initmem indexes
+        reconstruction_ids = []
+        for node in flattened_rpn:
+            if node not in [" + ", " * "]:
+                reconstruction_ids.append("initmem[threadid + " + str(path_init_nodes.index(node)) + "]")
+            else:
+                reconstruction_ids.append(node)
+        
+        print(reconstruction_ids)
+        
+        code += "    float " + finalnodes[i].name + " = " + string.join(reconstruction_ids) + ";\n"
             
     print("=== DEBUG ===")
     print(str(rmap(str, finalnodes)))

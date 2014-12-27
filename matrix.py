@@ -155,13 +155,13 @@ def cudagen(paths, graph):
     for i in range(len(init_values)):
         init_values[i] = "(float) " + str(init_values[i])
     
-    init_values_str = str(init_values).replace('[', "{\n    ").replace(']',"\n}").replace('\'', '')
-    code += "float initmem[" + str(len(init_values)) + "] = " + init_values_str + ";\n\n"
+    #init_values_str = str(init_values).replace('[', "{\n    ").replace(']',"\n}").replace('\'', '')
+    #code += "float initmem[" + str(len(init_values)) + "] = " + init_values_str + ";\n\n"
 
     code += "int main() {\n"
 
-    for d in init_array_dict.keys():
-        code += "    float " + d.name + " = initmem[" + str(init_array_dict[d]) + "];\n"
+    #for d in init_array_dict.keys():
+    #    code += "    float " + d.name + " = initmem[" + str(init_array_dict[d]) + "];\n"
 
     
     # Find out how to generate final nodes
@@ -175,7 +175,9 @@ def cudagen(paths, graph):
         path = rmap_nodes_args(get_path_for_node(node, graph), get_path_for_node, graph)
         paths_from_final.append(path)
         print(str(rmap(str, path))) # This generates prefix notation
-
+    
+    final_node_code = []
+    initmem_array = []
     for i in range(len(paths_from_final)):
         p = paths_from_final[i]
         out = []
@@ -191,9 +193,10 @@ def cudagen(paths, graph):
         
         path_init_nodes = path_init[:]
         for j in range(len(path_init)):
+            initmem_array += ["(float) " + str(path_init[j].value)]
             path_init[j] = "(float) " + str(path_init[j].value)
-        path_values_str = str(path_init).replace('[', "{\n    ").replace(']',"\n}").replace('\'', '')
-        code += "float initmem[" + str(len(path_init)) + "] = " + path_values_str + ";\n\n"
+        #path_values_str = str(path_init).replace('[', "{\n    ").replace(']',"\n}").replace('\'', '')
+        #code += "float initmem[" + str(len(path_init)) + "] = " + path_values_str + ";\n\n"
 
         print("Flattened: " + str(rmap(str, flattened_path)))
         print("Path init: " + str(path_init_nodes))
@@ -208,15 +211,25 @@ def cudagen(paths, graph):
             else:
                 reconstruction_ids.append(node)
         
-        print(reconstruction_ids)
+        final_node_code += ["    float " + finalnodes[i].name + " = " + string.join(reconstruction_ids) + ";\n"]
         
-        code += "    float " + finalnodes[i].name + " = " + string.join(reconstruction_ids) + ";\n"
+    code += "    " + array_to_c(initmem_array, "initmem")
+    code += """    
+    int threadid = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;\n"""
+    #1d grid x 2d blocks for now
+    code += string.join(final_node_code)
             
     print("=== DEBUG ===")
     print(str(rmap(str, finalnodes)))
     
     code += "}" #end main
     code += "\n/* CODEGRAPH GENERATED CODE END */\n"
+    
+    # write to file
+    f = open("main.cu", 'w')
+    f.write(code)
+    f.close()
+    
     return code
 
 matrix(a,b)

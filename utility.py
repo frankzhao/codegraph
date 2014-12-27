@@ -122,3 +122,8 @@ def flatten(S):
     if isinstance(S[0], list):
         return flatten(S[0]) + flatten(S[1:])
     return S[:1] + flatten(S[1:])
+
+def array_to_c(a, name):
+    array_str = str(a).replace('[', "{\n        ").replace(']',"\n    }").replace('\'', '')
+    out = "float " + str(name) + "[" + str(len(a)) + "] = " + array_str + ";\n\n"
+    return out

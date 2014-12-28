@@ -130,8 +130,7 @@ def find_paths(graph, startNodes, outarray=[], path=[], all_paths=[]):
 testedge = None
 testnode = None
 def cudagen(paths, graph):
-    code = """
-/* CODEGRAPH GENERATED CODE BEGIN */
+    code = """/* CODEGRAPH GENERATED CODE BEGIN */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -155,15 +154,6 @@ def cudagen(paths, graph):
     for i in range(len(init_values)):
         init_values[i] = "(float) " + str(init_values[i])
     
-    #init_values_str = str(init_values).replace('[', "{\n    ").replace(']',"\n}").replace('\'', '')
-    #code += "float initmem[" + str(len(init_values)) + "] = " + init_values_str + ";\n\n"
-
-    code += "int main() {\n"
-
-    #for d in init_array_dict.keys():
-    #    code += "    float " + d.name + " = initmem[" + str(init_array_dict[d]) + "];\n"
-
-    
     # Find out how to generate final nodes
     finalnodes = []
     for node in graph.nodes():
@@ -178,6 +168,7 @@ def cudagen(paths, graph):
     
     final_node_code = []
     initmem_array = []
+    chunkSize = 0
     for i in range(len(paths_from_final)):
         p = paths_from_final[i]
         out = []
@@ -188,6 +179,7 @@ def cudagen(paths, graph):
         for e in flattened_path:
             if e not in ["add", "mul"]:
                 path_init.append(e)
+        chunkSize = len(path_init)
 
         print("Initial values: " + str(map(str, path_init)))
         
@@ -207,17 +199,56 @@ def cudagen(paths, graph):
         reconstruction_ids = []
         for node in flattened_rpn:
             if node not in [" + ", " * "]:
-                reconstruction_ids.append("initmem[threadid + " + str(path_init_nodes.index(node)) + "]")
+                reconstruction_ids.append("a[chunkidx + " + str(path_init_nodes.index(node)) + "]")
             else:
                 reconstruction_ids.append(node)
         
-        final_node_code += ["    float " + finalnodes[i].name + " = " + string.join(reconstruction_ids) + ";\n"]
-        
+        final_node_code += ["    c[chunkidx]" + " = " + string.join(reconstruction_ids) + ";\n"]
+    
+    # Kernel method
+    code +="""__global__ void codegraphKernel(float* a, float* c, const int chunkSize) {
+    int threadid = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
+	// Don't calculate for elements outside of matrix
+	if (threadid >= chunkSize)
+		return;
+
+    int chunkidx = threadid * chunkSize;
+    
+    // Calculate
+"""
+    code += string.join(final_node_code) + "\n"
+    code += "}\n"
+    
+    # Main method
+    code += "int main() {\n"
+    code += "    const int chunkSize = " + str(chunkSize) + ";\n"   
     code += "    " + array_to_c(initmem_array, "initmem")
-    code += """    
-    int threadid = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;\n"""
-    #1d grid x 2d blocks for now
-    code += string.join(final_node_code)
+    
+    # TODO out size should be out_array.length / chunksize
+    # TODO specify grid and block size
+    code += """
+    // Copy to device
+	float* dev_initmem = 0;
+	float* dev_out = 0;
+	float out[2] = {0.f, 0.f};
+	cudaMalloc(&dev_initmem, initSize * sizeof(float));
+	cudaMalloc(&dev_out, 2 * sizeof(float));
+	cudaMemcpy(dev_initmem, initmem, initSize * sizeof(float), cudaMemcpyHostToDevice);
+
+    // Run on device
+    codegraphKernel<<<1,initSize>>>(dev_initmem, dev_out, chunkSize);
+
+	// Copy results
+	cudaMemcpy(out, dev_out, 2 * sizeof(float), cudaMemcpyDeviceToHost);
+
+    /*
+     *Do something with results here
+     */
+
+    // Free
+ 	cudaFree(dev_initmem);
+ 	cudaFree(dev_out);
+"""
             
     print("=== DEBUG ===")
     print(str(rmap(str, finalnodes)))

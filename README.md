@@ -1,4 +1,5 @@
-# Dependencies
+Dependencies
+===
 
 - graphviz
 - pygraphviz
@@ -6,12 +7,14 @@
 - matplotlib
 - numpy
 
-# Assumptions
+Assumptions
+===
 
 - Graph has no loops or backedges
 - Algorithm is ultimately a reduction
 - Termination
 
-# Notes
+Notes
+===
 
 - Graph generation has to be coded very carefully

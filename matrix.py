@@ -221,7 +221,8 @@ def cudagen(paths, graph):
     
     # Main method
     code += "int main() {\n"
-    code += "    const int chunkSize = " + str(chunkSize) + ";\n"   
+    code += "    const int chunkSize = " + str(chunkSize) + ";\n"
+    code += "    const int initSize = " + str(len(initmem_array)) + ";\n"
     code += "    " + array_to_c(initmem_array, "initmem")
     
     # TODO out size should be out_array.length / chunksize

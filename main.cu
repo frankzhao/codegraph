@@ -19,6 +19,7 @@ __global__ void codegraphKernel(float* a, float* c, const int chunkSize) {
 }
 int main() {
     const int chunkSize = 5;
+    const int initSize = 10;
     float initmem[10] = {
         (float) 2, (float) 3, (float) 2, (float) 1, (float) 0, (float) 0, (float) 3, (float) 2, (float) 3, (float) 4
     };
@@ -31,8 +32,10 @@ int main() {
 	cudaMalloc(&dev_initmem, initSize * sizeof(float));
 	cudaMalloc(&dev_out, 2 * sizeof(float));
 	cudaMemcpy(dev_initmem, initmem, initSize * sizeof(float), cudaMemcpyHostToDevice);
+
     // Run on device
     codegraphKernel<<<1,initSize>>>(dev_initmem, dev_out, chunkSize);
+
 	// Copy results
 	cudaMemcpy(out, dev_out, 2 * sizeof(float), cudaMemcpyDeviceToHost);
 

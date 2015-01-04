@@ -6,10 +6,13 @@ import string
 
 from graph import *
 
+# Get initial values of graphs (nodes  with no predecessors)
+# Sort by depth first, then by value
 def get_initial_values(paths, graph):
     values = {}
     for path in paths:
         node = path[0]
+
         if not graph.predecessors(node):
             values[node] = node.value
     return values
@@ -31,7 +34,14 @@ def get_path_for_node(node, graph):
     #print(str(rmap(str,path)))
     return path
 
-### UTILITY ###
+# Depth of node from root
+def depth(node, graph):
+    depth = 0
+    if graph.successors(node):
+        depth += 1
+        depth(graph.successors(node)[0])
+    else:
+        return depth
 
 # Recursive map
 def rmap(f, array):

@@ -100,10 +100,8 @@ def reconstruct(graph):
         find_paths(graph, [node], initial_nodes, path, all_paths)
 
     # Sort by output node to try and align input memory
-    #all_paths.sort()
     all_paths.sort(key=lambda p: len(p[1])) # sort by path length
     print("Paths found: " + str(len(all_paths)))
-    #parray(rmap(str, all_paths))
     
     # CUDA Code
     print(cudagen(all_paths, graph))
@@ -129,6 +127,7 @@ def find_paths(graph, startNodes, outarray=[], path=[], all_paths=[]):
 
 testedge = None
 testnode = None
+
 def cudagen(paths, graph):
     code = """/* CODEGRAPH GENERATED CODE BEGIN */
 
@@ -153,7 +152,7 @@ def cudagen(paths, graph):
 
     for i in range(len(init_values)):
         init_values[i] = "(float) " + str(init_values[i])
-    
+
     # Find out how to generate final nodes
     finalnodes = []
     for node in graph.nodes():
@@ -187,8 +186,6 @@ def cudagen(paths, graph):
         for j in range(len(path_init)):
             initmem_array += ["(float) " + str(path_init[j].value)]
             path_init[j] = "(float) " + str(path_init[j].value)
-        #path_values_str = str(path_init).replace('[', "{\n    ").replace(']',"\n}").replace('\'', '')
-        #code += "float initmem[" + str(len(path_init)) + "] = " + path_values_str + ";\n\n"
 
         print("Flattened: " + str(rmap(str, flattened_path)))
         print("Path init: " + str(path_init_nodes))
@@ -265,4 +262,4 @@ def cudagen(paths, graph):
     return code
 
 matrix(a,b)
-#plt.show() # Plot graph
+plt.show() # Plot graph

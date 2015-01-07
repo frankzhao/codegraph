@@ -57,7 +57,7 @@ def matrix(a,b):
     for e in out:
         print(e)
         
-    print_graph(graph)
+    #print_graph(graph)
     G = generate_graph(graph)
     reconstruct(G)
 
@@ -67,8 +67,8 @@ def generate_graph(graph):
     for node in graph.nodes:
         G.add_node(node)
 
-    for relation in sorted(graph.relations, key=str):
-        for inNode in sorted(relation.in_nodes, key=str):
+    for relation in graph.relations:
+        for inNode in relation.in_nodes:
             for outNode in relation.out_nodes:
                 G.add_edge(inNode, outNode)
                 G.edge[inNode][outNode]['method']=str(relation.method)
@@ -130,6 +130,10 @@ testedge = None
 testnode = None
 
 def cudagen(paths, graph):
+    print("=====================")
+    print(rmap(str,flood_fill(graph)))
+    print("=====================")
+    
     code = """/* CODEGRAPH GENERATED CODE BEGIN */
 
 #include <stdio.h>
@@ -202,7 +206,7 @@ def cudagen(paths, graph):
                 reconstruction_ids.append(node)
         
         final_node_code += ["    c[chunkidx]" + " = " + string.join(reconstruction_ids) + ";\n"]
-    
+
     # Kernel method
     code +="""__global__ void codegraphKernel(float* a, float* c, const int chunkSize) {
     int threadid = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;

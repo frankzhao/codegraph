@@ -144,3 +144,26 @@ def array_to_c(a, name):
     array_str = str(a).replace('[', "{\n        ").replace(']',"\n    }").replace('\'', '')
     out = "float " + str(name) + "[" + str(len(a)) + "] = " + array_str + ";\n\n"
     return out
+
+def get_final_nodes(graph):
+    final_nodes = [] # Nodes with no outedges
+    for node in graph.nodes_iter():
+        if (len(graph.out_edges(node)) == 0):
+            final_nodes += [node]
+    return final_nodes
+
+# Takes a graph, returns a list of disconnect graphs
+def flood_fill(graph):
+    graphs = []
+    final_nodes = get_final_nodes(graph)
+    coloured_nodes = []
+    for node in final_nodes:
+        flood_fill_recursion([node], graph, coloured_nodes)
+        graphs.append(coloured_nodes)
+    return graphs
+
+def flood_fill_recursion(nodes, graph, coloured):
+    for node in nodes:
+        print(node)
+        coloured += [node]
+        flood_fill_recursion(graph.predecessors(node), graph, coloured)

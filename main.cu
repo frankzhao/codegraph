@@ -21,7 +21,7 @@ int main() {
     const int chunkSize = 5;
     const int initSize = 10;
     float initmem[10] = {
-        (float) 3, (float) 4, (float) 0, (float) 2, (float) 3, (float) 3, (float) 2, (float) 0, (float) 1, (float) 2
+        (float) 3, (float) 4, (float) 0, (float) 2, (float) 3, (float) 3, (float) 2, (float) 0, (float) 2, (float) 1
     };
 
 

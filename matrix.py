@@ -1,11 +1,12 @@
 # Frank Zhao 2014
 # Code generation from algorithmic graphs
 import networkx as nx
+import pygraphviz as gv
 import matplotlib.pyplot as plt
 import numpy as np
 import random as rand
 import string
-#from collections import deque
+from collections import OrderedDict
 
 from utility import *
 from graph import *
@@ -63,7 +64,7 @@ def matrix(a,b):
 
 # Conversion from my graph model to networkx
 def generate_graph(graph):
-    G = nx.DiGraph()
+    G = OrderedDiGraph()
     for node in graph.nodes:
         G.add_node(node)
 
@@ -130,6 +131,9 @@ testedge = None
 testnode = None
 
 def cudagen(paths, graph):
+    global out
+    outlen = str(len(out))
+
     # Flood fill to detect disconnected graphs
     disconnected_graphs = []
     for n in flood_fill(graph):
@@ -240,35 +244,34 @@ def cudagen(paths, graph):
     code += "    const int chunkSize = " + str(chunkSize) + ";\n"
     code += "    const int initSize = " + str(len(initmem_array)) + ";\n"
     code += "    " + array_to_c(initmem_array, "initmem")
-    
-    # TODO out size should be out_array.length / chunksize
+
     # TODO specify grid and block size
     code += """
     // Copy to device
-	float* dev_initmem = 0;
-	float* dev_out = 0;
-	float out[2] = {0.f, 0.f};
-	cudaMalloc(&dev_initmem, initSize * sizeof(float));
-	cudaMalloc(&dev_out, 2 * sizeof(float));
-	cudaMemcpy(dev_initmem, initmem, initSize * sizeof(float), cudaMemcpyHostToDevice);
+	  float* dev_initmem = 0;
+	  float* dev_out = 0;
+"""
+    code += "    float out[" + outlen + "];\n"
+    code += "    cudaMalloc(&dev_initmem, initSize * sizeof(float));\n"
+    code += "    cudaMalloc(&dev_out, " + outlen + " * sizeof(float));\n"
+    code += """
+    cudaMemcpy(dev_initmem, initmem, initSize * sizeof(float), cudaMemcpyHostToDevice);
 
     // Run on device
     codegraphKernel<<<1,initSize>>>(dev_initmem, dev_out, chunkSize);
 
-	// Copy results
-	cudaMemcpy(out, dev_out, 2 * sizeof(float), cudaMemcpyDeviceToHost);
-
+    // Copy results
+"""
+    code += "    cudaMemcpy(out, dev_out, " + outlen + " * sizeof(float), cudaMemcpyDeviceToHost);\n"
+    code += """
     /*
      *Do something with results here
      */
 
     // Free
- 	cudaFree(dev_initmem);
- 	cudaFree(dev_out);
+ 	  cudaFree(dev_initmem);
+ 	  cudaFree(dev_out);
 """
-            
-    print("=== DEBUG ===")
-    print(str(rmap(str, finalnodes)))
     
     code += "}" #end main
     code += "\n/* CODEGRAPH GENERATED CODE END */\n"
@@ -279,6 +282,30 @@ def cudagen(paths, graph):
     f.close()
     
     return code
+    
+# Create an OrderedDiGraph to preserve operation order
+# Inherits from nx.Digraph
+class OrderedDiGraph(nx.DiGraph):
+    def __init__(self, data=None, **attr):
+        self.node_dict_factory = OrderedDict
+        self.adjlist_dict_factory = OrderedDict
+        self.edge_attr_dict_factory = OrderedDict
+
+        self.graph = {} # dictionary for graph attributes
+        self.node = OrderedDict() # dictionary for node attributes
+        # We store two adjacency lists:
+        # the  predecessors of node n are stored in the dict self.pred
+        # the successors of node n are stored in the dict self.succ=self.adj
+        self.adj = OrderedDict()  # empty adjacency dictionary
+        self.pred = OrderedDict()  # predecessor
+        self.succ = self.adj  # successor
+
+        # attempt to load graph with data
+        if data is not None:
+            convert.to_networkx_graph(data,create_using=self)
+        # load graph attributes (must be after convert)
+        self.graph.update(attr)
+        self.edge=self.adj
 
 matrix(a,b)
 plt.show() # Plot graph

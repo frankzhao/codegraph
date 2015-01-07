@@ -130,9 +130,9 @@ testedge = None
 testnode = None
 
 def cudagen(paths, graph):
-    print("=====================")
-    print(rmap(str,flood_fill(graph)))
-    print("=====================")
+    print("==== FLOOD FILL =====")
+    print(str(rmap(str, flood_fill(graph))))
+    print("==== FLOOD FILL =====")
     
     code = """/* CODEGRAPH GENERATED CODE BEGIN */
 

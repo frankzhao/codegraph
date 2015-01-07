@@ -160,10 +160,10 @@ def flood_fill(graph):
     for node in final_nodes:
         flood_fill_recursion([node], graph, coloured_nodes)
         graphs.append(coloured_nodes)
+        coloured_nodes = []
     return graphs
 
 def flood_fill_recursion(nodes, graph, coloured):
     for node in nodes:
-        print(node)
         coloured += [node]
         flood_fill_recursion(graph.predecessors(node), graph, coloured)

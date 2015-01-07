@@ -130,18 +130,22 @@ testedge = None
 testnode = None
 
 def cudagen(paths, graph):
-    print("==== FLOOD FILL =====")
-    print(str(rmap(str, flood_fill(graph))))
-    
+    # Flood fill to detect disconnected graphs
     disconnected_graphs = []
     for n in flood_fill(graph):
         # Create subgraph from each node group
         dg = graph.subgraph(n)
         disconnected_graphs += [dg]
 
-    print("==== FLOOD FILL =====")
-    print(nx.is_isomorphic(disconnected_graphs[0], disconnected_graphs[1]))
-    print("==== FLOOD FILL =====")
+    # Group disconected graph into similar kernels
+    kernel_groups = []
+    for i in range(len(disconnected_graphs)):
+        current_kernel_group = []
+        for j in range(len(disconnected_graphs)):
+             if disconnected_graphs[i] != disconnected_graphs[j]:
+                 if nx.is_isomorphic(disconnected_graphs[i], disconnected_graphs[j]):
+                     current_kernel_group += disconnected_graphs[j]
+        kernel_groups += [current_kernel_group]
     
     code = """/* CODEGRAPH GENERATED CODE BEGIN */
 

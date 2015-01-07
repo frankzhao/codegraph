@@ -132,6 +132,15 @@ testnode = None
 def cudagen(paths, graph):
     print("==== FLOOD FILL =====")
     print(str(rmap(str, flood_fill(graph))))
+    
+    disconnected_graphs = []
+    for n in flood_fill(graph):
+        # Create subgraph from each node group
+        dg = graph.subgraph(n)
+        disconnected_graphs += [dg]
+
+    print("==== FLOOD FILL =====")
+    print(nx.is_isomorphic(disconnected_graphs[0], disconnected_graphs[1]))
     print("==== FLOOD FILL =====")
     
     code = """/* CODEGRAPH GENERATED CODE BEGIN */
@@ -169,6 +178,7 @@ def cudagen(paths, graph):
         path = rmap_nodes_args(get_path_for_node(node, graph), get_path_for_node, graph)
         paths_from_final.append(path)
         print(str(rmap(str, path))) # This generates prefix notation
+    paths_from_final.sort()
     
     final_node_code = []
     initmem_array = []

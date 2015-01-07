@@ -22,3 +22,6 @@ class Relation:
         self.method = method
         self.in_nodes = in_nodes
         self.out_nodes = out_nodes
+        
+    def __str__(self):
+        return str(self.method)

@@ -56,7 +56,8 @@ def matrix(a,b):
     print("Resulting matrix:")
     for e in out:
         print(e)
-
+        
+    print_graph(graph)
     G = generate_graph(graph)
     reconstruct(G)
 
@@ -66,8 +67,8 @@ def generate_graph(graph):
     for node in graph.nodes:
         G.add_node(node)
 
-    for relation in graph.relations:
-        for inNode in relation.in_nodes:
+    for relation in sorted(graph.relations, key=str):
+        for inNode in sorted(relation.in_nodes, key=str):
             for outNode in relation.out_nodes:
                 G.add_edge(inNode, outNode)
                 G.edge[inNode][outNode]['method']=str(relation.method)

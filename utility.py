@@ -6,6 +6,13 @@ import string
 
 from graph import *
 
+# Print graph
+def print_graph(graph):
+    for node in graph.nodes:
+        print(node)
+    for edge in graph.relations:
+        print(str(map(str,edge.in_nodes)) + str(edge) + str(map(str,edge.out_nodes)))
+
 # Get initial values of graphs (nodes  with no predecessors)
 # Sort by depth first, then by value
 def get_initial_values(paths, graph):

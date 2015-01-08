@@ -169,40 +169,40 @@ def cudagen(paths, graph):
 #include <cuda_runtime.h>
 
 """
-
-    # Magic happens here
-    # Create initial values
-    initial_dict = get_initial_values(paths, graph)
-    
-    # generate initial_node -> array_pos dict
-    init_values = []
-    init_array_dict = {}
-    counter = 0
-    for d in initial_dict.keys():
-        init_values.append(initial_dict[d])
-        init_array_dict[d] = counter
-        counter += 1
-
-    for i in range(len(init_values)):
-        init_values[i] = "(float) " + str(init_values[i])
-
-    # Find out how to generate final nodes
-    finalnodes = []
-    for node in graph.nodes():
-        if not graph.out_edges(node):
-            finalnodes.append(node)
-
-    paths_from_final = []
-    for node in finalnodes:
-        path = rmap_nodes_args(get_path_for_node(node, graph), get_path_for_node, graph)
-        paths_from_final.append(path)
-        print(str(rmap(str, path))) # This generates prefix notation
-    paths_from_final.sort()
-
-    final_node_code = []
-    initmem_array = []
-    chunkSize = 0
     for i in range(len(kernel_groups)):
+        # Magic happens here
+        # Create initial values
+        initial_dict = get_initial_values(paths, graph)
+    
+        # generate initial_node -> array_pos dict
+        init_values = []
+        init_array_dict = {}
+        counter = 0
+        for d in initial_dict.keys():
+            init_values.append(initial_dict[d])
+            init_array_dict[d] = counter
+            counter += 1
+
+        for n in range(len(init_values)):
+            init_values[n] = "(float) " + str(init_values[n])
+
+        # Find out how to generate final nodes
+        finalnodes = []
+        for node in graph.nodes():
+            if not graph.out_edges(node):
+                finalnodes.append(node)
+
+        paths_from_final = []
+        for node in finalnodes:
+            path = rmap_nodes_args(get_path_for_node(node, graph), get_path_for_node, graph)
+            paths_from_final.append(path)
+            print(str(rmap(str, path))) # This generates prefix notation
+        paths_from_final.sort()
+
+        final_node_code = []
+        initmem_array = []
+        chunkSize = 0
+        
         p = paths_from_final[i]
         out = []
         flattened_path = flatten(p)

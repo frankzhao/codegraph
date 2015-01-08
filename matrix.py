@@ -150,8 +150,10 @@ def cudagen(paths, graph):
         for j in range(len(disconnected_graphs)):
             if (disconnected_graphs[i] != disconnected_graphs[j]) and (disconnected_graphs[j] not in seen):
                 if nx.is_isomorphic(disconnected_graphs[i], disconnected_graphs[j]):
+                    current_kernel_group.append(disconnected_graphs[i])
                     current_kernel_group.append(disconnected_graphs[j])
                     seen.append(disconnected_graphs[i])
+                    seen.append(disconnected_graphs[j])
             print(current_kernel_group)
         if len(current_kernel_group) > 0:
             kernel_groups += [current_kernel_group]
@@ -200,7 +202,7 @@ def cudagen(paths, graph):
     final_node_code = []
     initmem_array = []
     chunkSize = 0
-    for i in range(len(paths_from_final)):
+    for i in range(len(kernel_groups)):
         p = paths_from_final[i]
         out = []
         flattened_path = flatten(p)

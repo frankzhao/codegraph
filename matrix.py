@@ -200,7 +200,7 @@ def cudagen(paths, graph):
     final_node_code = []
     initmem_array = []
     chunkSize = 0
-    for i in range(len(kernel_groups)):
+    for i in range(len(paths_from_final)):
         p = paths_from_final[i]
         out = []
         flattened_path = flatten(p)

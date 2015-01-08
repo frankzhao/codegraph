@@ -6,22 +6,20 @@
 
 __global__ void codegraphKernel(float* a, float* c, const int chunkSize) {
     int threadid = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
-	// Don't calculate for elements outside of matrix
-	if (threadid >= chunkSize)
-		return;
+    // Don't calculate for elements outside of matrix
+    if (threadid >= chunkSize)
+    	return;
 
     int chunkidx = threadid * chunkSize;
     
     // Calculate
     c[chunkidx] = a[chunkidx + 0]  *  a[chunkidx + 1]  +  a[chunkidx + 2]  +  a[chunkidx + 3]  *  a[chunkidx + 4];
-     c[chunkidx] = a[chunkidx + 0]  *  a[chunkidx + 1]  +  a[chunkidx + 2]  +  a[chunkidx + 3]  *  a[chunkidx + 4];
-
 }
 int main() {
     const int chunkSize = 5;
-    const int initSize = 10;
-    float initmem[10] = {
-        (float) 2, (float) 1, (float) 0, (float) 3, (float) 2, (float) 3, (float) 4, (float) 0, (float) 2, (float) 3
+    const int initSize = 5;
+    float initmem[5] = {
+        (float) 2, (float) 1, (float) 0, (float) 3, (float) 2
     };
 
 

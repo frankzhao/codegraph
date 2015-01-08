@@ -129,8 +129,9 @@ def find_paths(graph, startNodes, outarray=[], path=[], all_paths=[]):
 
 testedge = None
 testnode = None
-
+test = None
 def cudagen(paths, graph):
+    # Memory for output
     global out
     outlen = str(len(out))
 
@@ -143,13 +144,21 @@ def cudagen(paths, graph):
 
     # Group disconected graph into similar kernels
     kernel_groups = []
+    seen = []
     for i in range(len(disconnected_graphs)):
         current_kernel_group = []
         for j in range(len(disconnected_graphs)):
-             if disconnected_graphs[i] != disconnected_graphs[j]:
-                 if nx.is_isomorphic(disconnected_graphs[i], disconnected_graphs[j]):
-                     current_kernel_group += disconnected_graphs[j]
-        kernel_groups += [current_kernel_group]
+            if (disconnected_graphs[i] != disconnected_graphs[j]) and (disconnected_graphs[j] not in seen):
+                if nx.is_isomorphic(disconnected_graphs[i], disconnected_graphs[j]):
+                    current_kernel_group.append(disconnected_graphs[j])
+                    seen.append(disconnected_graphs[i])
+            print(current_kernel_group)
+        if len(current_kernel_group) > 0:
+            kernel_groups += [current_kernel_group]
+    print("===========")
+    print(kernel_groups)
+    global test
+    test = kernel_groups
     
     code = """/* CODEGRAPH GENERATED CODE BEGIN */
 
@@ -187,11 +196,11 @@ def cudagen(paths, graph):
         paths_from_final.append(path)
         print(str(rmap(str, path))) # This generates prefix notation
     paths_from_final.sort()
-    
+
     final_node_code = []
     initmem_array = []
     chunkSize = 0
-    for i in range(len(paths_from_final)):
+    for i in range(len(kernel_groups)):
         p = paths_from_final[i]
         out = []
         flattened_path = flatten(p)
@@ -223,21 +232,22 @@ def cudagen(paths, graph):
             else:
                 reconstruction_ids.append(node)
         
-        final_node_code += ["    c[chunkidx]" + " = " + string.join(reconstruction_ids) + ";\n"]
+        final_node_code += ["c[chunkidx]" + " = " + string.join(reconstruction_ids) + ";\n"]
 
-    # Kernel method
-    code +="""__global__ void codegraphKernel(float* a, float* c, const int chunkSize) {
+    # Kernel methods
+    for kernel in kernel_groups:
+        code +="""__global__ void codegraphKernel(float* a, float* c, const int chunkSize) {
     int threadid = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
-	// Don't calculate for elements outside of matrix
-	if (threadid >= chunkSize)
-		return;
+    // Don't calculate for elements outside of matrix
+    if (threadid >= chunkSize)
+    	return;
 
     int chunkidx = threadid * chunkSize;
     
     // Calculate
-"""
-    code += string.join(final_node_code) + "\n"
-    code += "}\n"
+    """
+        code += string.join(final_node_code)
+        code += "}\n"
     
     # Main method
     code += "int main() {\n"

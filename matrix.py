@@ -193,13 +193,13 @@ def cudagen(paths, graph):
 
             # Find out how to generate final nodes
             finalnodes = []
-            for node in graph.nodes():
-                if not graph.out_edges(node):
+            for node in kernel_graph.nodes():
+                if not kernel_graph.out_edges(node):
                     finalnodes.append(node)
 
             paths_from_final = []
             for node in finalnodes:
-                path = rmap_nodes_args(get_path_for_node(node, graph), get_path_for_node, graph)
+                path = rmap_nodes_args(get_path_for_node(node, kernel_graph), get_path_for_node, kernel_graph)
                 paths_from_final.append(path)
                 print(str(rmap(str, path))) # This generates prefix notation
             paths_from_final.sort()

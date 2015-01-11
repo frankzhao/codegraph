@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <cuda_runtime.h>
 
-__global__ void codegraphKernel(float* a, float* c, const int chunkSize) {
+__global__ void codegraphKernel(float* a, float* c, const int chunkSize, const int limit) {
     int threadid = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
     // Don't calculate for elements outside of matrix
     if (threadid >= chunkSize)
@@ -13,14 +13,14 @@ __global__ void codegraphKernel(float* a, float* c, const int chunkSize) {
     int chunkidx = threadid * chunkSize;
     
     // Calculate
-    c[threadid] = a[chunkidx + 0]  *  a[chunkidx + 1]  +  a[chunkidx + 2]  +  a[chunkidx + 3]  *  a[chunkidx + 4];
+    c[threadid] = a[chunkidx + 0]  +  a[chunkidx + 1]  *  a[chunkidx + 2]  +  a[chunkidx + 3]  *  a[chunkidx + 4];
 }
 int main() {
     const int chunkSize = 5;
     const int initSize = 10;
     const int limit = (int) initSize/chunkSize;
     float initmem[10] = {
-        (float) 0, (float) 1, (float) 2, (float) 3, (float) 2, (float) 2, (float) 3, (float) 0, (float) 3, (float) 4
+        (float) 2, (float) 1, (float) 0, (float) 2, (float) 3, (float) 0, (float) 2, (float) 3, (float) 4, (float) 3
     };
 
 

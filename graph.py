@@ -25,3 +25,27 @@ class Relation:
         
     def __str__(self):
         return str(self.method)
+        
+# Create an OrderedDiGraph to preserve operation order
+# Inherits from nx.Digraph
+class OrderedDiGraph(nx.DiGraph):
+    def __init__(self, data=None, **attr):
+        self.node_dict_factory = OrderedDict
+        self.adjlist_dict_factory = OrderedDict
+        self.edge_attr_dict_factory = OrderedDict
+
+        self.graph = {} # dictionary for graph attributes
+        self.node = OrderedDict() # dictionary for node attributes
+        # We store two adjacency lists:
+        # the  predecessors of node n are stored in the dict self.pred
+        # the successors of node n are stored in the dict self.succ=self.adj
+        self.adj = OrderedDict()  # empty adjacency dictionary
+        self.pred = OrderedDict()  # predecessor
+        self.succ = self.adj  # successor
+
+        # attempt to load graph with data
+        if data is not None:
+            convert.to_networkx_graph(data,create_using=self)
+        # load graph attributes (must be after convert)
+        self.graph.update(attr)
+        self.edge=self.adj

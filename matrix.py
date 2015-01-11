@@ -238,7 +238,7 @@ def cudagen(paths, graph):
                 else:
                     reconstruction_ids.append(node)
         
-            final_node_code += ["c[chunkidx]" + " = " + string.join(reconstruction_ids) + ";\n"]
+            final_node_code += ["c[threadid]" + " = " + string.join(reconstruction_ids) + ";\n"]
 
     # Kernel methods
     for kernel in kernel_groups:
@@ -259,6 +259,7 @@ def cudagen(paths, graph):
     code += "int main() {\n"
     code += "    const int chunkSize = " + str(chunkSize) + ";\n"
     code += "    const int initSize = " + str(len(initmem_array)) + ";\n"
+    code += "    const int limit = (int) initSize/chunkSize;\n" # Or kernel isomorphic group length
     code += "    " + array_to_c(initmem_array, "initmem")
 
     # TODO specify grid and block size
@@ -274,7 +275,7 @@ def cudagen(paths, graph):
     cudaMemcpy(dev_initmem, initmem, initSize * sizeof(float), cudaMemcpyHostToDevice);
 
     // Run on device
-    codegraphKernel<<<1,initSize>>>(dev_initmem, dev_out, chunkSize);
+    codegraphKernel<<<1,initSize>>>(dev_initmem, dev_out, chunkSize, limit);
 
     // Copy results
 """
@@ -298,30 +299,6 @@ def cudagen(paths, graph):
     f.close()
     
     return code
-    
-# Create an OrderedDiGraph to preserve operation order
-# Inherits from nx.Digraph
-class OrderedDiGraph(nx.DiGraph):
-    def __init__(self, data=None, **attr):
-        self.node_dict_factory = OrderedDict
-        self.adjlist_dict_factory = OrderedDict
-        self.edge_attr_dict_factory = OrderedDict
-
-        self.graph = {} # dictionary for graph attributes
-        self.node = OrderedDict() # dictionary for node attributes
-        # We store two adjacency lists:
-        # the  predecessors of node n are stored in the dict self.pred
-        # the successors of node n are stored in the dict self.succ=self.adj
-        self.adj = OrderedDict()  # empty adjacency dictionary
-        self.pred = OrderedDict()  # predecessor
-        self.succ = self.adj  # successor
-
-        # attempt to load graph with data
-        if data is not None:
-            convert.to_networkx_graph(data,create_using=self)
-        # load graph attributes (must be after convert)
-        self.graph.update(attr)
-        self.edge=self.adj
 
 matrix(a,b)
 plt.show() # Plot graph

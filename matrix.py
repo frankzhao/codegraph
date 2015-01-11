@@ -170,71 +170,75 @@ def cudagen(paths, graph):
 
 """
     for i in range(len(kernel_groups)):
-        # Magic happens here
         # Create initial values
-        initial_dict = get_initial_values(paths, graph)
-    
-        # generate initial_node -> array_pos dict
-        init_values = []
-        init_array_dict = {}
-        counter = 0
-        for d in initial_dict.keys():
-            init_values.append(initial_dict[d])
-            init_array_dict[d] = counter
-            counter += 1
-
-        for n in range(len(init_values)):
-            init_values[n] = "(float) " + str(init_values[n])
-
-        # Find out how to generate final nodes
-        finalnodes = []
-        for node in graph.nodes():
-            if not graph.out_edges(node):
-                finalnodes.append(node)
-
-        paths_from_final = []
-        for node in finalnodes:
-            path = rmap_nodes_args(get_path_for_node(node, graph), get_path_for_node, graph)
-            paths_from_final.append(path)
-            print(str(rmap(str, path))) # This generates prefix notation
-        paths_from_final.sort()
-
-        final_node_code = []
         initmem_array = []
-        chunkSize = 0
+        initial_dict = get_initial_values(paths, graph)
+        kernel_graphs = kernel_groups[i]
         
-        p = paths_from_final[i]
-        out = []
-        flattened_path = flatten(p)
-        
-        # Generate initial array for this path
-        path_init = []
-        for e in flattened_path:
-            if e not in ["add", "mul"]:
-                path_init.append(e)
-        chunkSize = len(path_init)
+        # Iterate over each disconnected graph for a group
+        # of isomorphic kernels
+        for kernel_graph in kernel_graphs:
+            # Magic happens here
+            # generate initial_node -> array_pos dict
+            init_values = []
+            init_array_dict = {}
+            counter = 0
+            for d in initial_dict.keys():
+                init_values.append(initial_dict[d])
+                init_array_dict[d] = counter
+                counter += 1
 
-        print("Initial values: " + str(map(str, path_init)))
-        
-        path_init_nodes = path_init[:]
-        for j in range(len(path_init)):
-            initmem_array += ["(float) " + str(path_init[j].value)]
-            path_init[j] = "(float) " + str(path_init[j].value)
+            for n in range(len(init_values)):
+                init_values[n] = "(float) " + str(init_values[n])
 
-        print("Flattened: " + str(rmap(str, flattened_path)))
-        print("Path init: " + str(path_init_nodes))
+            # Find out how to generate final nodes
+            finalnodes = []
+            for node in graph.nodes():
+                if not graph.out_edges(node):
+                    finalnodes.append(node)
+
+            paths_from_final = []
+            for node in finalnodes:
+                path = rmap_nodes_args(get_path_for_node(node, graph), get_path_for_node, graph)
+                paths_from_final.append(path)
+                print(str(rmap(str, path))) # This generates prefix notation
+            paths_from_final.sort()
+
+            final_node_code = []
+            chunkSize = 0
         
-        flattened_rpn = flatten(rpn_to_path(flattened_path))[:]
+            p = paths_from_final[i]
+            out = []
+            flattened_path = flatten(p)
         
-        # Convert RPN flattened path to initmem indexes
-        reconstruction_ids = []
-        for node in flattened_rpn:
-            if node not in [" + ", " * "]:
-                reconstruction_ids.append("a[chunkidx + " + str(path_init_nodes.index(node)) + "]")
-            else:
-                reconstruction_ids.append(node)
+            # Generate initial array for this path
+            path_init = []
+            for e in flattened_path:
+                if e not in ["add", "mul"]:
+                    path_init.append(e)
+            chunkSize = len(path_init)
+
+            print("Initial values: " + str(map(str, path_init)))
         
-        final_node_code += ["c[chunkidx]" + " = " + string.join(reconstruction_ids) + ";\n"]
+            path_init_nodes = path_init[:]
+            for j in range(len(path_init)):
+                initmem_array += ["(float) " + str(path_init[j].value)]
+                path_init[j] = "(float) " + str(path_init[j].value)
+
+            print("Flattened: " + str(rmap(str, flattened_path)))
+            print("Path init: " + str(path_init_nodes))
+        
+            flattened_rpn = flatten(rpn_to_path(flattened_path))[:]
+        
+            # Convert RPN flattened path to initmem indexes
+            reconstruction_ids = []
+            for node in flattened_rpn:
+                if node not in [" + ", " * "]:
+                    reconstruction_ids.append("a[chunkidx + " + str(path_init_nodes.index(node)) + "]")
+                else:
+                    reconstruction_ids.append(node)
+        
+            final_node_code += ["c[chunkidx]" + " = " + string.join(reconstruction_ids) + ";\n"]
 
     # Kernel methods
     for kernel in kernel_groups:

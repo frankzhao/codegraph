@@ -243,7 +243,7 @@ def cudagen(paths, graph):
 
     # Kernel methods
     for kernel in kernel_groups:
-        code +="""__global__ void codegraphKernel(float* a, float* c, const int chunkSize) {
+        code +="""__global__ void codegraphKernel(float* a, float* c, const int chunkSize, const int limit) {
     int threadid = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
     // Don't calculate for elements outside of matrix
     if (threadid >= chunkSize)

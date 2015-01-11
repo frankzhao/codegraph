@@ -13,13 +13,14 @@ __global__ void codegraphKernel(float* a, float* c, const int chunkSize) {
     int chunkidx = threadid * chunkSize;
     
     // Calculate
-    c[chunkidx] = a[chunkidx + 0]  *  a[chunkidx + 1]  +  a[chunkidx + 2]  *  a[chunkidx + 3]  +  a[chunkidx + 4];
+    c[threadid] = a[chunkidx + 0]  *  a[chunkidx + 1]  +  a[chunkidx + 2]  +  a[chunkidx + 3]  *  a[chunkidx + 4];
 }
 int main() {
     const int chunkSize = 5;
     const int initSize = 10;
+    const int limit = (int) initSize/chunkSize;
     float initmem[10] = {
-        (float) 3, (float) 2, (float) 1, (float) 2, (float) 0, (float) 3, (float) 4, (float) 2, (float) 3, (float) 0
+        (float) 0, (float) 1, (float) 2, (float) 3, (float) 2, (float) 2, (float) 3, (float) 0, (float) 3, (float) 4
     };
 
 
@@ -33,7 +34,7 @@ int main() {
     cudaMemcpy(dev_initmem, initmem, initSize * sizeof(float), cudaMemcpyHostToDevice);
 
     // Run on device
-    codegraphKernel<<<1,initSize>>>(dev_initmem, dev_out, chunkSize);
+    codegraphKernel<<<1,initSize>>>(dev_initmem, dev_out, chunkSize, limit);
 
     // Copy results
     cudaMemcpy(out, dev_out, 2 * sizeof(float), cudaMemcpyDeviceToHost);

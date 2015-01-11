@@ -1,3 +1,9 @@
+# Frank Zhao 2014
+# Code generation from algorithmic graphs
+
+import networkx as nx
+from collections import OrderedDict
+
 # Graph classes
 class Graph:
     def __init__(self, nodes=[], relations=[]):

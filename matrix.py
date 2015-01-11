@@ -55,9 +55,9 @@ def matrix(a,b):
                 graph.nodes += [o]
                 graph.relations += [e2]
 
-    print("Resulting matrix:")
-    for e in out:
-        print(e)
+    #print("Resulting matrix:")
+    #for e in out:
+    #    print(e)
         
     #print_graph(graph)
     G = generate_graph(graph)
@@ -104,10 +104,10 @@ def reconstruct(graph):
 
     # Sort by output node to try and align input memory
     all_paths.sort(key=lambda p: len(p[1])) # sort by path length
-    print("Paths found: " + str(len(all_paths)))
+    #print("Paths found: " + str(len(all_paths)))
     
     # CUDA Code
-    print(cudagen(all_paths, graph))
+    #print(cudagen(all_paths, graph))
 
 # DFS
 def find_paths(graph, startNodes, outarray=[], path=[], all_paths=[]):
@@ -128,9 +128,6 @@ def find_paths(graph, startNodes, outarray=[], path=[], all_paths=[]):
             path += list(np.unique(methods))
             find_paths(graph, graph.predecessors(node), outarray, path, all_paths)
 
-testedge = None
-testnode = None
-test = None
 def cudagen(paths, graph):
     # Memory for output
     global out
@@ -155,13 +152,8 @@ def cudagen(paths, graph):
                     current_kernel_group.append(disconnected_graphs[j])
                     seen.append(disconnected_graphs[i])
                     seen.append(disconnected_graphs[j])
-            print(current_kernel_group)
         if len(current_kernel_group) > 0:
             kernel_groups += [current_kernel_group]
-    print("===========")
-    print(kernel_groups)
-    global test
-    test = kernel_groups
     
     code = """/* CODEGRAPH GENERATED CODE BEGIN */
 
@@ -202,7 +194,7 @@ def cudagen(paths, graph):
             for node in finalnodes:
                 path = rmap_nodes_args(get_path_for_node(node, kernel_graph), get_path_for_node, kernel_graph)
                 paths_from_final.append(path)
-                print(str(rmap(str, path))) # This generates prefix notation
+                #print(str(rmap(str, path))) # This generates prefix notation
             paths_from_final.sort()
 
             final_node_code = []
@@ -219,15 +211,15 @@ def cudagen(paths, graph):
                     path_init.append(e)
             chunkSize = len(path_init)
 
-            print("Initial values: " + str(map(str, path_init)))
+            #print("Initial values: " + str(map(str, path_init)))
         
             path_init_nodes = path_init[:]
             for j in range(len(path_init)):
                 initmem_array += ["(float) " + str(path_init[j].value)]
                 path_init[j] = "(float) " + str(path_init[j].value)
 
-            print("Flattened: " + str(rmap(str, flattened_path)))
-            print("Path init: " + str(path_init_nodes))
+            #print("Flattened: " + str(rmap(str, flattened_path)))
+            #print("Path init: " + str(path_init_nodes))
         
             flattened_rpn = flatten(rpn_to_path(flattened_path))[:]
         
@@ -302,4 +294,4 @@ def cudagen(paths, graph):
     return code
 
 matrix(a,b)
-plt.show() # Plot graph
+#plt.show() # Plot graph

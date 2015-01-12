@@ -81,6 +81,13 @@ def rmap_nodes_args(array, f, graph):
         return rmap_nodes_args(get_path_for_node(array, graph), get_path_for_node, graph)
     else:
         return f(array, graph)
+     
+def rlength(array, count = 0):
+    if hasattr(array, "__iter__"):
+        return sum([rlength(elem) for elem in array])
+    else:
+        count += 1
+        return count
 
 # Print array with newlines
 def parray(array):

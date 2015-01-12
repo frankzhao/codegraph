@@ -131,7 +131,7 @@ def find_paths(graph, startNodes, outarray=[], path=[], all_paths=[]):
 def cudagen(paths, graph):
     # Memory for output
     global out
-    outlen = str(len(out))
+    outlen = str(rlength(out))
 
     # Flood fill to detect disconnected graphs
     disconnected_graphs = []

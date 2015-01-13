@@ -40,6 +40,7 @@ def get_path_for_node(node, graph):
             method = graph.edge[edge[0]][edge[1]]["method"]
             path.append(method)
         path.append(edge[0])
+        #print(str(rmap(str,path)))
     
     #print(str(rmap(str,path)))
     return path

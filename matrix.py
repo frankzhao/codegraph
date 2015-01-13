@@ -195,6 +195,8 @@ def cudagen(paths, graph):
             paths_from_final = []
             for node in finalnodes:
                 path = rmap_nodes_args(get_path_for_node(node, kernel_graph), get_path_for_node, kernel_graph)
+                #path.sort()
+                #print(str(rmap(str,path)))
                 if path not in seen_paths:
                     seen_paths.append(path)
                     paths_from_final.append(path)
@@ -222,7 +224,7 @@ def cudagen(paths, graph):
                     initmem_array += ["(float) " + str(path_init[j].value)]
                     path_init[j] = "(float) " + str(path_init[j].value)
 
-                print("Flattened: " + str(rmap(str, flattened_path)))
+                #print("Flattened: " + str(rmap(str, flattened_path)))
                 #print("Path init: " + str(path_init_nodes))
         
                 flattened_rpn = flatten(rpn_to_path(flattened_path))[:]

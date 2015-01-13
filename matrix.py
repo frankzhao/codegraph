@@ -15,9 +15,9 @@ from graph import *
 a = [[1,2],
      [3,4]]
 
-b = [[2],[3]]
+b = [[2,3],[3,2]]
 
-out = [[0],[0]]
+out = [[0,0],[0,0]]
 
 dxg = None
 
@@ -108,6 +108,7 @@ def reconstruct(graph):
     
     # CUDA Code
     #print(cudagen(all_paths, graph))
+    cudagen(all_paths, graph)
 
 # DFS
 def find_paths(graph, startNodes, outarray=[], path=[], all_paths=[]):
@@ -162,6 +163,7 @@ def cudagen(paths, graph):
 #include <cuda_runtime.h>
 
 """
+    seen_paths = []
     for i in range(len(kernel_groups)):
         # Create initial values
         initmem_array = []
@@ -189,47 +191,49 @@ def cudagen(paths, graph):
             for node in kernel_graph.nodes():
                 if not kernel_graph.out_edges(node):
                     finalnodes.append(node)
-
+            
             paths_from_final = []
             for node in finalnodes:
                 path = rmap_nodes_args(get_path_for_node(node, kernel_graph), get_path_for_node, kernel_graph)
-                paths_from_final.append(path)
-                #print(str(rmap(str, path))) # This generates prefix notation
+                if path not in seen_paths:
+                    seen_paths.append(path)
+                    paths_from_final.append(path)
             paths_from_final.sort()
 
             final_node_code = []
             chunkSize = 0
+            
+            if len(paths_from_final) > 0:
+                p = paths_from_final[i]
+                out = []
+                flattened_path = flatten(p)
         
-            p = paths_from_final[i]
-            out = []
-            flattened_path = flatten(p)
-        
-            # Generate initial array for this path
-            path_init = []
-            for e in flattened_path:
-                if e not in ["add", "mul"]:
-                    path_init.append(e)
-            chunkSize = len(path_init)
+                # Generate initial array for this path
+                path_init = []
+                for e in flattened_path:
+                    if e not in ["add", "mul"]:
+                        path_init.append(e)
+                chunkSize = len(path_init)
 
-            #print("Initial values: " + str(map(str, path_init)))
+                #print("Initial values: " + str(map(str, path_init)))
         
-            path_init_nodes = path_init[:]
-            for j in range(len(path_init)):
-                initmem_array += ["(float) " + str(path_init[j].value)]
-                path_init[j] = "(float) " + str(path_init[j].value)
+                path_init_nodes = path_init[:]
+                for j in range(len(path_init)):
+                    initmem_array += ["(float) " + str(path_init[j].value)]
+                    path_init[j] = "(float) " + str(path_init[j].value)
 
-            #print("Flattened: " + str(rmap(str, flattened_path)))
-            #print("Path init: " + str(path_init_nodes))
+                print("Flattened: " + str(rmap(str, flattened_path)))
+                #print("Path init: " + str(path_init_nodes))
         
-            flattened_rpn = flatten(rpn_to_path(flattened_path))[:]
+                flattened_rpn = flatten(rpn_to_path(flattened_path))[:]
         
-            # Convert RPN flattened path to initmem indexes
-            reconstruction_ids = []
-            for node in flattened_rpn:
-                if node not in [" + ", " * "]:
-                    reconstruction_ids.append("a[chunkidx + " + str(path_init_nodes.index(node)) + "]")
-                else:
-                    reconstruction_ids.append(node)
+                # Convert RPN flattened path to initmem indexes
+                reconstruction_ids = []
+                for node in flattened_rpn:
+                    if node not in [" + ", " * "]:
+                        reconstruction_ids.append("a[chunkidx + " + str(path_init_nodes.index(node)) + "]")
+                    else:
+                        reconstruction_ids.append(node)
         
             final_node_code += ["c[threadid]" + " = " + string.join(reconstruction_ids) + ";\n"]
 
@@ -238,7 +242,7 @@ def cudagen(paths, graph):
         code +="""__global__ void codegraphKernel(float* a, float* c, const int chunkSize, const int limit) {
     int threadid = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
     // Don't calculate for elements outside of matrix
-    if (threadid >= chunkSize)
+    if (threadid >= limit)
     	return;
 
     int chunkidx = threadid * chunkSize;
@@ -294,4 +298,4 @@ def cudagen(paths, graph):
     return code
 
 matrix(a,b)
-#plt.show() # Plot graph
+plt.show() # Plot graph

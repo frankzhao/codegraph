@@ -7,7 +7,7 @@
 __global__ void codegraphKernel(float* a, float* c, const int chunkSize, const int limit) {
     int threadid = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
     // Don't calculate for elements outside of matrix
-    if (threadid >= chunkSize)
+    if (threadid >= limit)
     	return;
 
     int chunkidx = threadid * chunkSize;
@@ -17,19 +17,19 @@ __global__ void codegraphKernel(float* a, float* c, const int chunkSize, const i
 }
 int main() {
     const int chunkSize = 5;
-    const int initSize = 10;
+    const int initSize = 20;
     const int limit = (int) initSize/chunkSize;
-    float initmem[10] = {
-        (float) 2, (float) 1, (float) 0, (float) 2, (float) 3, (float) 0, (float) 2, (float) 3, (float) 4, (float) 3
+    float initmem[20] = {
+        (float) 0, (float) 1, (float) 2, (float) 3, (float) 2, (float) 0, (float) 1, (float) 3, (float) 2, (float) 2, (float) 3, (float) 4, (float) 2, (float) 3, (float) 0, (float) 0, (float) 3, (float) 3, (float) 2, (float) 4
     };
 
 
     // Copy to device
 	  float* dev_initmem = 0;
 	  float* dev_out = 0;
-    float out[2];
+    float out[4];
     cudaMalloc(&dev_initmem, initSize * sizeof(float));
-    cudaMalloc(&dev_out, 2 * sizeof(float));
+    cudaMalloc(&dev_out, 4 * sizeof(float));
 
     cudaMemcpy(dev_initmem, initmem, initSize * sizeof(float), cudaMemcpyHostToDevice);
 
@@ -37,7 +37,7 @@ int main() {
     codegraphKernel<<<1,initSize>>>(dev_initmem, dev_out, chunkSize, limit);
 
     // Copy results
-    cudaMemcpy(out, dev_out, 2 * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(out, dev_out, 4 * sizeof(float), cudaMemcpyDeviceToHost);
 
     /*
      *Do something with results here

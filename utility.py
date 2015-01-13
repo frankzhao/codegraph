@@ -77,7 +77,8 @@ def rmap_args(array, f, *args):
         
 def rmap_nodes_args(array, f, graph):
     if hasattr(array, "__iter__"):
-        return [rmap_nodes_args(elem, f, graph) for elem in array]
+        sorted_array = [array.pop(0)] + sorted(array)
+        return [rmap_nodes_args(elem, f, graph) for elem in sorted_array]
     elif isinstance(array, Node) and graph.in_edges(array):
         return rmap_nodes_args(get_path_for_node(array, graph), get_path_for_node, graph)
     else:
@@ -89,6 +90,13 @@ def rlength(array, count = 0):
     else:
         count += 1
         return count
+    
+    if hasattr(array, "__iter__"):
+        if len(array) == 0:
+            return array
+        return [rsort(elem, [array.pop(0)] + sorted(array)) for elem in array]
+    else:
+        return array
 
 # Print array with newlines
 def parray(array):

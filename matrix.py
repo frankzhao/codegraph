@@ -208,7 +208,8 @@ def cudagen(paths, graph):
             if len(paths_from_final) > 0:
                 p = paths_from_final[i]
                 out = []
-                flattened_path = flatten(p)
+                #print(p)
+                flattened_path = flatten([p.pop(0)] + sorted(p))
         
                 # Generate initial array for this path
                 path_init = []
@@ -224,7 +225,7 @@ def cudagen(paths, graph):
                     initmem_array += ["(float) " + str(path_init[j].value)]
                     path_init[j] = "(float) " + str(path_init[j].value)
 
-                #print("Flattened: " + str(rmap(str, flattened_path)))
+                print("Flattened: " + str(rmap(str,flattened_path)))
                 #print("Path init: " + str(path_init_nodes))
         
                 flattened_rpn = flatten(rpn_to_path(flattened_path))[:]
@@ -300,4 +301,4 @@ def cudagen(paths, graph):
     return code
 
 matrix(a,b)
-plt.show() # Plot graph
+#plt.show() # Plot graph

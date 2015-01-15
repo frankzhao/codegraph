@@ -138,8 +138,14 @@ def cudagen(paths, graph):
     disconnected_graphs = []
     for n in flood_fill(graph):
         # Create subgraph from each node group
-        dg = graph.subgraph(sorted(n))
+        dg = OrderedDiGraph()
+        dg.add_nodes_from(sorted(n))
+        for node in sorted(n):
+            for edge in sorted(graph.edges(node)):
+                dg.add_edge(edge[0], edge[1])
+                dg.edge[edge[0]][edge[1]]["method"] = graph.edge[edge[0]][edge[1]]["method"]
         disconnected_graphs += [dg]
+    print(disconnected_graphs)
 
     # Group disconected graph into similar kernels
     kernel_groups = {}
@@ -211,7 +217,7 @@ def cudagen(paths, graph):
             chunkSize = 0
             
             if len(paths_from_final) > 0:
-                p = paths_from_final[i]
+                p = rpathsort(paths_from_final[i])
                 out = []
                 print(p)
                 flattened_path = flatten([p.pop(0)] + sorted(p))

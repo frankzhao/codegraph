@@ -90,11 +90,11 @@ def rlength(array, count = 0):
         count += 1
         return count
 
-def rsort(array):
-    if len(array) == 0:
+def rpathsort(array):
+    if not isinstance(array, list) or len(array) == 0:
         return array
     else:
-        return [array.pop(0)] + rsort(sorted(array))
+        return [array.pop(0)] + map(rpathsort,sorted(array))
 
 # Print array with newlines
 def parray(array):

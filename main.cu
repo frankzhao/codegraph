@@ -20,7 +20,7 @@ int main() {
     const int initSize = 20;
     const int limit = (int) initSize/chunkSize;
     float initmem[20] = {
-        (float) 0, (float) 1, (float) 2, (float) 3, (float) 2, (float) 0, (float) 1, (float) 3, (float) 2, (float) 2, (float) 2, (float) 3, (float) 0, (float) 3, (float) 4, (float) 0, (float) 3, (float) 3, (float) 2, (float) 4
+        (float) 0, (float) 1, (float) 2, (float) 3, (float) 2, (float) 0, (float) 3, (float) 1, (float) 2, (float) 2, (float) 0, (float) 2, (float) 3, (float) 3, (float) 4, (float) 0, (float) 3, (float) 3, (float) 4, (float) 2
     };
 
 
@@ -42,6 +42,7 @@ int main() {
     /*
      *Do something with results here
      */
+    printf("%f %f %f %f", out[0], out[1], out[2], out[3]);
 
     // Free
  	  cudaFree(dev_initmem);

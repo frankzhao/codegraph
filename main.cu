@@ -17,10 +17,10 @@ __global__ void codegraphKernel(float* a, float* c, const int chunkSize, const i
 }
 int main() {
     const int chunkSize = 5;
-    const int initSize = 5;
+    const int initSize = 20;
     const int limit = (int) initSize/chunkSize;
-    float initmem[5] = {
-        (float) 2, (float) 1, (float) 0, (float) 3, (float) 2
+    float initmem[20] = {
+        (float) 2, (float) 1, (float) 0, (float) 3, (float) 2, (float) 3, (float) 1, (float) 0, (float) 2, (float) 2, (float) 3, (float) 2, (float) 0, (float) 3, (float) 4, (float) 3, (float) 3, (float) 0, (float) 4, (float) 2
     };
 
 

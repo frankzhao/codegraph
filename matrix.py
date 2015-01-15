@@ -143,14 +143,14 @@ def cudagen(paths, graph):
 
     # Group disconected graph into similar kernels
     kernel_groups = {}
-    for graph in disconnected_graphs:
+    for g in disconnected_graphs:
         found = False
-        for g in kernel_groups.keys():
-            if nx.is_isomorphic(g, graph):
-                kernel_groups[g] += [graph]
+        for k in kernel_groups.keys():
+            if nx.is_isomorphic(k, g):
+                kernel_groups[k] += [g]
                 found = True
         if not found:
-            kernel_groups[graph] = [graph]
+            kernel_groups[g] = [g]
     kernel_groups = kernel_groups.values()
     
     code = """/* CODEGRAPH GENERATED CODE BEGIN */
@@ -163,15 +163,15 @@ def cudagen(paths, graph):
     seen_paths = []
     chunkSize = 0
     for i in range(len(kernel_groups)):
-        print(str(rmap(str,seen_paths)))
+        #print(str(rmap(str,seen_paths)))
         # Create initial values
         initmem_array = []
-        initial_dict = get_initial_values(paths, graph)
         kernel_graphs = kernel_groups[i]
+        initial_dict = get_initial_values(paths, graph)
         
         # Iterate over each disconnected graph for a group
         # of isomorphic kernels
-        print(str(rmap(str, kernel_graphs)))
+        #print(str(rmap(str, kernel_graphs)))
         for kernel_graph in kernel_graphs:
             # Magic happens here
             # generate initial_node -> array_pos dict
@@ -224,7 +224,7 @@ def cudagen(paths, graph):
                     initmem_array += ["(float) " + str(path_init[j].value)]
                     path_init[j] = "(float) " + str(path_init[j].value)
 
-                print("Flattened: " + str(rmap(str,flattened_path)))
+                #print("Flattened: " + str(rmap(str,flattened_path)))
                 #print("Path init: " + str(path_init_nodes))
         
                 flattened_rpn = flatten(rpn_to_path(flattened_path))[:]

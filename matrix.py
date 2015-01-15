@@ -103,7 +103,7 @@ def reconstruct(graph):
         find_paths(graph, [node], initial_nodes, path, all_paths)
 
     # Sort by output node to try and align input memory
-    all_paths.sort(key=lambda p: len(p[1])) # sort by path length
+    #all_paths.sort(key=lambda p: len(p[1])) # sort by path length
     #print("Paths found: " + str(len(all_paths)))
     
     # CUDA Code
@@ -138,7 +138,7 @@ def cudagen(paths, graph):
     disconnected_graphs = []
     for n in flood_fill(graph):
         # Create subgraph from each node group
-        dg = graph.subgraph(n)
+        dg = graph.subgraph(sorted(n))
         disconnected_graphs += [dg]
 
     # Group disconected graph into similar kernels
@@ -173,6 +173,13 @@ def cudagen(paths, graph):
         # of isomorphic kernels
         #print(str(rmap(str, kernel_graphs)))
         for kernel_graph in kernel_graphs:
+            
+            plt.clf()
+            pos = nx.graphviz_layout(kernel_graph, prog = 'dot')
+            nx.draw(kernel_graph, pos, node_size=1000)
+            nx.draw_networkx_labels(kernel_graph, pos)
+            plt.show()
+            
             # Magic happens here
             # generate initial_node -> array_pos dict
             init_values = []
@@ -195,11 +202,10 @@ def cudagen(paths, graph):
             paths_from_final = []
             for node in finalnodes:
                 path = rmap_nodes_args(get_path_for_node(node, kernel_graph), get_path_for_node, kernel_graph)
-                path.sort()
                 if path not in seen_paths:
                     seen_paths.append(i)
                     paths_from_final.append(path)
-            paths_from_final.sort()
+            #paths_from_final.sort()
 
             final_node_code = []
             chunkSize = 0
@@ -207,7 +213,7 @@ def cudagen(paths, graph):
             if len(paths_from_final) > 0:
                 p = paths_from_final[i]
                 out = []
-                #print(p)
+                print(p)
                 flattened_path = flatten([p.pop(0)] + sorted(p))
         
                 # Generate initial array for this path

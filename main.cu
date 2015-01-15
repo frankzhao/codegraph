@@ -13,14 +13,14 @@ __global__ void codegraphKernel(float* a, float* c, const int chunkSize, const i
     int chunkidx = threadid * chunkSize;
     
     // Calculate
-    c[threadid] = a[chunkidx + 0]  *  a[chunkidx + 1]  +  a[chunkidx + 2]  +  a[chunkidx + 3]  *  a[chunkidx + 4];
+    c[threadid] = a[chunkidx + 0]  *  a[chunkidx + 1]  +  a[chunkidx + 2];
 }
 int main() {
     const int chunkSize = 5;
-    const int initSize = 30;
+    const int initSize = 5;
     const int limit = (int) initSize/chunkSize;
-    float initmem[30] = {
-        (float) 2, (float) 1, (float) 0, (float) 3, (float) 2, (float) 3, (float) 1, (float) 0, (float) 2, (float) 2, (float) 2, (float) 1, (float) 0, (float) 3, (float) 2, (float) 3, (float) 2, (float) 0, (float) 3, (float) 4, (float) 2, (float) 1, (float) 0, (float) 3, (float) 2, (float) 3, (float) 3, (float) 0, (float) 4, (float) 2
+    float initmem[5] = {
+        (float) 2, (float) 1, (float) 0, (float) 3, (float) 2
     };
 
 

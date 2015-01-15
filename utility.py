@@ -76,8 +76,10 @@ def rmap_args(array, f, *args):
         return f(array, *args)
         
 def rmap_nodes_args(array, f, graph):
+    #print(str(rmap(str,array)))
     if hasattr(array, "__iter__"):
-        sorted_array = [array.pop(0)] + sorted(array)
+        copy_array = array[:]
+        sorted_array = [copy_array.pop(0)] + sorted(copy_array)
         return [rmap_nodes_args(elem, f, graph) for elem in sorted_array]
     elif isinstance(array, Node) and graph.in_edges(array):
         return rmap_nodes_args(get_path_for_node(array, graph), get_path_for_node, graph)

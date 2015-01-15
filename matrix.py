@@ -142,19 +142,16 @@ def cudagen(paths, graph):
         disconnected_graphs += [dg]
 
     # Group disconected graph into similar kernels
-    kernel_groups = []
-    seen = []
-    for i in range(len(disconnected_graphs)):
-        current_kernel_group = []
-        for j in range(len(disconnected_graphs)):
-            if (disconnected_graphs[i] != disconnected_graphs[j]) and (disconnected_graphs[j] not in seen):
-                if nx.is_isomorphic(disconnected_graphs[i], disconnected_graphs[j]):
-                    current_kernel_group.append(disconnected_graphs[i])
-                    current_kernel_group.append(disconnected_graphs[j])
-                    seen.append(disconnected_graphs[i])
-                    seen.append(disconnected_graphs[j])
-        if len(current_kernel_group) > 0:
-            kernel_groups += [current_kernel_group]
+    kernel_groups = {}
+    for graph in disconnected_graphs:
+        found = False
+        for g in kernel_groups.keys():
+            if nx.is_isomorphic(g, graph):
+                kernel_groups[g] += [graph]
+                found = True
+        if not found:
+            kernel_groups[graph] = [graph]
+    kernel_groups = kernel_groups.values()
     
     code = """/* CODEGRAPH GENERATED CODE BEGIN */
 
@@ -164,7 +161,9 @@ def cudagen(paths, graph):
 
 """
     seen_paths = []
+    chunkSize = 0
     for i in range(len(kernel_groups)):
+        print(str(rmap(str,seen_paths)))
         # Create initial values
         initmem_array = []
         initial_dict = get_initial_values(paths, graph)
@@ -172,6 +171,7 @@ def cudagen(paths, graph):
         
         # Iterate over each disconnected graph for a group
         # of isomorphic kernels
+        print(str(rmap(str, kernel_graphs)))
         for kernel_graph in kernel_graphs:
             # Magic happens here
             # generate initial_node -> array_pos dict
@@ -195,10 +195,9 @@ def cudagen(paths, graph):
             paths_from_final = []
             for node in finalnodes:
                 path = rmap_nodes_args(get_path_for_node(node, kernel_graph), get_path_for_node, kernel_graph)
-                #path.sort()
-                #print(str(rmap(str,path)))
+                path.sort()
                 if path not in seen_paths:
-                    seen_paths.append(path)
+                    seen_paths.append(i)
                     paths_from_final.append(path)
             paths_from_final.sort()
 

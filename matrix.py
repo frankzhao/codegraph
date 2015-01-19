@@ -12,18 +12,31 @@ from collections import OrderedDict
 from utility import *
 from graph import *
 
-a = [[1,2],
-     [3,4]]
+a = []
+b = []
+out = []
 
-b = [[2,3],[3,2]]
-
-out = [[0,0],[0,0]]
+width = 20
+size = width * width
+# Insert random values
+for i in range(width):
+    rowa = []
+    rowb = []
+    rowout = []
+    for j in range(width):
+        rowa.append(rand.randint(0,100))
+        rowb.append(rand.randint(0,100))
+        rowout.append(0)
+    a.append(rowa)
+    b.append(rowb)
+    out.append(rowout)
 
 dxg = None
 
 graph = Graph()
 
 def matrix(a,b):
+    print("Generating graph...")
     for arow in range(len(a)):
         for bcol in range(len(b[0])):
             o = Node(0, rand_hash(5)+"x_init")
@@ -65,6 +78,7 @@ def matrix(a,b):
 
 # Conversion from my graph model to networkx
 def generate_graph(graph):
+    print("Generating networkx...")
     G = OrderedDiGraph()
     for node in graph.nodes:
         G.add_node(node)
@@ -78,16 +92,17 @@ def generate_graph(graph):
     edgelabels = nx.get_edge_attributes(G, 'method')
     # swap key values for rendering
     dict( zip(edgelabels.values(),edgelabels.keys()) )
-    pos = nx.graphviz_layout(G, prog = 'dot')
-    nx.draw(G, pos, node_size=1000)
-    nx.draw_networkx_edge_labels(G, pos, edge_labels = edgelabels)
-    nx.draw_networkx_labels(G, pos)
+    #pos = nx.graphviz_layout(G, prog = 'dot')
+    #nx.draw(G, pos, node_size=1000)
+    #nx.draw_networkx_edge_labels(G, pos, edge_labels = edgelabels)
+    #nx.draw_networkx_labels(G, pos)
     global dxg
     dxg = G
     return G
 
 # Reconstruct input parameters from networkx graph
 def reconstruct(graph):
+    print("Reconstructing graph...")
     final_nodes = [] # Nodes with no outedges
     initial_nodes = []
     for node in graph.nodes_iter():
@@ -98,6 +113,7 @@ def reconstruct(graph):
     initial_nodes = []
     all_paths = []
     #print("Final nodes: " + str(rmap(str, final_nodes)))
+    print("Finding paths...")
     for node in final_nodes:
         path = []
         find_paths(graph, [node], initial_nodes, path, all_paths)
@@ -135,6 +151,7 @@ def cudagen(paths, graph):
     outlen = str(rlength(out))
 
     # Flood fill to detect disconnected graphs
+    print("Performing flood fill...")
     disconnected_graphs = []
     for n in flood_fill(graph):
         # Create subgraph from each node group
@@ -145,9 +162,10 @@ def cudagen(paths, graph):
                 dg.add_edge(edge[0], edge[1])
                 dg.edge[edge[0]][edge[1]]["method"] = graph.edge[edge[0]][edge[1]]["method"]
         disconnected_graphs += [dg]
-    print(disconnected_graphs)
+    #print(disconnected_graphs)
 
     # Group disconected graph into similar kernels
+    print("Grouping kernels...")
     kernel_groups = {}
     for g in disconnected_graphs:
         found = False
@@ -168,6 +186,8 @@ def cudagen(paths, graph):
 """
     seen_paths = []
     chunkSize = 0
+    
+    print("Generating CUDA...")
     for i in range(len(kernel_groups)):
         #print(str(rmap(str,seen_paths)))
         # Create initial values
@@ -180,11 +200,11 @@ def cudagen(paths, graph):
         #print(str(rmap(str, kernel_graphs)))
         for kernel_graph in kernel_graphs:
             
-            plt.clf()
-            pos = nx.graphviz_layout(kernel_graph, prog = 'dot')
-            nx.draw(kernel_graph, pos, node_size=1000)
-            nx.draw_networkx_labels(kernel_graph, pos)
-            plt.show()
+            #plt.clf()
+            #pos = nx.graphviz_layout(kernel_graph, prog = 'dot')
+            #nx.draw(kernel_graph, pos, node_size=1000)
+            #nx.draw_networkx_labels(kernel_graph, pos)
+            #plt.show()
             
             # Magic happens here
             # generate initial_node -> array_pos dict
@@ -219,7 +239,7 @@ def cudagen(paths, graph):
             if len(paths_from_final) > 0:
                 p = rpathsort(paths_from_final[i])
                 out = []
-                print(p)
+                #print(p)
                 flattened_path = flatten([p.pop(0)] + sorted(p))
         
                 # Generate initial array for this path
@@ -252,6 +272,7 @@ def cudagen(paths, graph):
             final_node_code += ["c[threadid]" + " = " + string.join(reconstruction_ids) + ";\n"]
 
     # Kernel methods
+    print("Generating kernels...")
     for kernel in kernel_groups:
         code +="""__global__ void codegraphKernel(float* a, float* c, const int chunkSize, const int limit) {
     int threadid = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
